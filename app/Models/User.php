@@ -29,4 +29,15 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function serviceConnections()
+    {
+        return $this->hasMany(ServiceConnection::class);
+    }
+
+    public function automations()
+    {
+        return $this->hasMany(Automation::class);
+    }
+
 }
