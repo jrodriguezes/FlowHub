@@ -2,10 +2,15 @@
 
 namespace App\Models;
 
+use Database\Factories\AutomationFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Automation extends Model
 {
+    /** @use HasFactory<AutomationFactory> */
+    use HasFactory;
+
     protected $fillable = ['user_id', 'name', 'description', 'is_active'];
 
     protected function casts(): array
@@ -14,6 +19,7 @@ class Automation extends Model
             'is_active' => 'boolean',
         ];
     }
+
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -38,5 +44,4 @@ class Automation extends Model
     {
         return $this->hasMany(AutomationExecution::class);
     }
-
 }
