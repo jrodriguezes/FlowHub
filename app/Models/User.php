@@ -40,4 +40,8 @@ class User extends Authenticatable
         return $this->hasMany(Automation::class);
     }
 
+    public function automationExecutions()
+    {
+        return $this->hasMany(AutomationExecution::class);
+    }
 }
