@@ -17,7 +17,7 @@ class ServiceConnectionPolicy
         return $user->id === $serviceConnection->user_id;
     }
 
-    public function create(User $user): bool
+    public function store(User $user): bool
     {
         return true;
     }

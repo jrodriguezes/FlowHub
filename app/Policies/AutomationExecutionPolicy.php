@@ -17,7 +17,7 @@ class AutomationExecutionPolicy
         return $user->id === $automationExecution->user_id;
     }
 
-    public function create(User $user): bool
+    public function store(User $user): bool
     {
         return true;
     }
