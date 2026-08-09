@@ -5,7 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreAutomationRequest extends FormRequest
+class UpdateAutomationRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,7 +22,6 @@ class StoreAutomationRequest extends FormRequest
      */
     public function rules(): array
     {
-        // automation data validation
         return [
             'name' => ["required", "string", "max:255"],
             'description' => ["nullable", "string", "max:255"],
@@ -32,7 +31,7 @@ class StoreAutomationRequest extends FormRequest
             'trigger' => ["required", "array"],
             'trigger.type' => ["required", "string", "max:255"],
             'trigger.cron_expression' => ["nullable", "string", "max:255"],
-            
+
             // conditions data validation
             'conditions' => ["nullable", "array"],
             'conditions.*.field' => ["required", "string", "max:255"],
