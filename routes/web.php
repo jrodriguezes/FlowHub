@@ -21,10 +21,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/home', function () {
         return view('home');
     })->name('home');
+
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
     Route::get('/automations', [AutomationController::class, 'index'])->name('automations.index');
+    Route::post('/automations', [AutomationController::class, 'store'])->name('automations.store');
     Route::get('/automations/{automation}', [AutomationController::class, 'show'])->name('automations.show');
+    Route::patch('/automations/{automation}/toggle', [AutomationController::class, 'toggle'])->name('automations.toggle');
     Route::put('/automations/{automation}', [AutomationController::class, 'update'])->name('automations.update');
     Route::delete('/automations/{automation}', [AutomationController::class, 'destroy'])->name('automations.destroy');
 
