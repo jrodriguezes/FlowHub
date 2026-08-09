@@ -1,10 +1,10 @@
-<div class="space-y-8" x-data="automationForm()">
+<div class="space-y-8" x-data="automationForm({ triggerType: '{{ old('trigger.type', $automation->trigger->type ?? 'github_push') }}' })" @load-automation.window="loadData($event.detail)">
     <!-- Información General -->
     <div class="bg-[#111827] border border-white/5 rounded-xl p-6">
         <h2 class="text-lg font-medium text-white mb-4">Información General</h2>
         <div class="space-y-4">
             <div>
-                <label for="name" class="block text-sm font-medium text-gray-400">Nombre de la automatización</label>
+                <label for="name" class="block text-sm font-medium text-gray-400">Nombre de la automatización <span class="text-red-500">*</span></label>
                 <input type="text" name="name" id="name" value="{{ old('name', $automation->name ?? '') }}" required
                     class="mt-1 block w-full bg-[#0B0F19] border border-white/10 rounded-lg shadow-sm py-2 px-3 text-gray-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
             </div>
@@ -28,7 +28,7 @@
 
     <!-- Trigger (Disparador) -->
     <div class="bg-[#111827] border border-white/5 rounded-xl p-6">
-        <h2 class="text-lg font-medium text-white mb-1">Disparador (Trigger)</h2>
+        <h2 class="text-lg font-medium text-white mb-1">Disparador (Trigger) <span class="text-red-500">*</span></h2>
         <p class="text-sm text-gray-500 mb-4">El evento que iniciará este flujo.</p>
         
         <div>
@@ -90,7 +90,7 @@
     <div class="bg-[#111827] border border-white/5 rounded-xl p-6">
         <div class="flex justify-between items-center mb-4">
             <div>
-                <h2 class="text-lg font-medium text-white mb-1">Acciones</h2>
+                <h2 class="text-lg font-medium text-white mb-1">Acciones <span class="text-red-500">*</span></h2>
                 <p class="text-sm text-gray-500">Lo que ocurrirá cuando se dispare la automatización.</p>
             </div>
             <button type="button" @click="addAction()" class="inline-flex items-center px-3 py-1.5 border border-white/10 text-xs font-medium rounded text-indigo-400 bg-indigo-500/10 hover:bg-indigo-500/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#111827] focus:ring-indigo-500 transition-colors">
@@ -110,10 +110,21 @@
                             <option value="discord_webhook">Discord - Webhook</option>
                         </select>
                         
+                        <!-- Selector de Conexión (Aparece solo si hay acción) -->
+                        <div x-show="action.type !== ''" class="mt-2">
+                            <label class="block text-xs font-medium text-gray-400 mb-1">Cuenta/Conexión a utilizar</label>
+                            <select :name="`actions[${index}][service_connection_id]`" x-model="action.service_connection_id" class="block w-full bg-[#111827] border border-white/10 rounded py-2 px-3 text-sm text-gray-200 focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="">(Sin conexión / API Pública)</option>
+                                @foreach($connections ?? [] as $conn)
+                                    <option value="{{ $conn->id }}">{{ ucfirst($conn->provider) }} - {{ $conn->external_id ?? 'Cuenta conectada' }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        
                         <!-- Configuraciones dinámicas basadas en la acción -->
                         <div x-show="action.type !== ''" x-transition class="mt-2 bg-[#111827] border border-white/5 rounded p-3">
                             <label class="block text-xs font-medium text-gray-400 mb-1">Configuración / Mensaje</label>
-                            <textarea :name="`actions[${index}][config][message]`" rows="2" placeholder="Ej: Hubo un nuevo push en el repositorio..." class="block w-full bg-[#0B0F19] border border-white/10 rounded py-1.5 px-2 text-sm text-gray-200 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+                            <textarea :name="`actions[${index}][config][message]`" x-model="action.config.message" rows="2" placeholder="Ej: Hubo un nuevo push en el repositorio..." class="block w-full bg-[#0B0F19] border border-white/10 rounded py-1.5 px-2 text-sm text-gray-200 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
                             <p class="text-[10px] text-gray-500 mt-1">Puedes usar variables como {{ '${trigger.branch}' }}</p>
                         </div>
                     </div>
@@ -129,40 +140,3 @@
     </div>
 </div>
 
-<script>
-    function automationForm() {
-        return {
-            triggerType: '{{ old('trigger.type', $automation->trigger->type ?? 'github_push') }}',
-            conditions: [
-                // Simulación de datos iniciales si existen
-            ],
-            actions: [
-                { id: Date.now(), type: '' }
-            ],
-            
-            addCondition() {
-                this.conditions.push({
-                    id: Date.now(),
-                    field: '',
-                    operator: 'equals',
-                    value: ''
-                });
-            },
-            
-            removeCondition(id) {
-                this.conditions = this.conditions.filter(c => c.id !== id);
-            },
-            
-            addAction() {
-                this.actions.push({
-                    id: Date.now(),
-                    type: ''
-                });
-            },
-            
-            removeAction(id) {
-                this.actions = this.actions.filter(a => a.id !== id);
-            }
-        }
-    }
-</script>

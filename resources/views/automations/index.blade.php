@@ -26,7 +26,7 @@
                     class="bg-[#111827] border border-white/5 rounded-xl p-5 hover:border-indigo-500/30 transition-colors group relative overflow-hidden">
                     <!-- Active Indicator -->
                     <div class="absolute top-0 right-0 p-4">
-                        @if($automation->is_active ?? true)
+                        @if($automation->is_active)
                             <span
                                 class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                                 Activo
@@ -44,7 +44,7 @@
                             <a href="{{ route('automations.show', $automation->id ?? 1) }}"
                                 class="hover:text-indigo-400 focus:outline-none">
                                 <span class="absolute inset-0" aria-hidden="true"></span>
-                                {{ $automation->name ?? 'Nombre de la automatización' }}
+                                {{ $automation->name }}
                             </a>
                         </h3>
                         <p class="text-sm text-gray-400 mt-1 line-clamp-2">
@@ -57,9 +57,30 @@
                             Actualizado {{ ($automation->updated_at ?? now())->diffForHumans() }}
                         </div>
                         <div class="flex space-x-2">
+                            <!-- Botón Activar/Desactivar -->
+                            <form action="{{ route('automations.toggle', $automation) }}" method="POST" 
+                            onsubmit="return confirm('¿Seguro que deseas {{ $automation->is_active ? 'desactivar' : 'activar' }} esta automatización?')" class="inline-block">
+                                @csrf
+                                @method('PATCH')
+                                <button type="submit"
+                                    class="p-1.5 rounded-md transition-colors {{ $automation->is_active ? 'text-emerald-400 bg-white/5 hover:bg-emerald-500/10' : 'text-gray-400 bg-white/5 hover:bg-gray-500/10 hover:text-white' }}"
+                                    title="{{ $automation->is_active ? 'Desactivar' : 'Activar' }}">
+                                    @if($automation->is_active)
+                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    @else
+                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    @endif
+                                </button>
+                            </form>
+                            
                             <!-- Botón Editar -->
                             <button type="button"
-                                @click="openEdit({{ $automation->id }}, '{{ addslashes($automation->name) }}', '{{ addslashes($automation->description) }}', {{ $automation->is_active ? 'true' : 'false' }})"
+                                @click="openEdit({{ Js::from($automation) }})"
                                 class="p-1.5 text-gray-400 hover:text-indigo-400 bg-white/5 hover:bg-indigo-500/10 rounded-md transition-colors"
                                 title="Editar">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -67,7 +88,6 @@
                                         d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                 </svg>
                             </button>
-
                             <!-- Botón Eliminar -->
                             <form action="{{ route('automations.destroy', $automation->id) }}" method="POST"
                                 class="inline-block"
