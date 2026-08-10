@@ -35,8 +35,8 @@ class UpdateAutomationRequest extends FormRequest
             // conditions data validation
             'conditions' => ["nullable", "array"],
             'conditions.*.field' => ["required", "string", "max:255"],
-            'conditions.*.operator' => ["required", "string", "max:255"],
-            'conditions.*.value' => ["required", "string", "max:255"],
+            'conditions.*.operator' => ["required", "string", "in:equals,not_equals,contains,exists"],
+            'conditions.*.value' => ["nullable", "string", "max:255"],
 
             // actions data validation
             'actions' => ["required", "array", "min:1"],
