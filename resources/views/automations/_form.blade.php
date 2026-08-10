@@ -33,10 +33,9 @@
         
         <div>
             <select name="trigger[type]" x-model="triggerType" class="mt-1 block w-full bg-[#0B0F19] border border-white/10 rounded-lg shadow-sm py-2 px-3 text-gray-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                <option value="github_push">GitHub - Push a repositorio</option>
-                <option value="github_issue">GitHub - Nuevo Issue</option>
-                <option value="webhook">Webhook Personalizado</option>
-                <option value="schedule">Horario (Cron)</option>
+                <option value="">Selecciona un disparador...</option>
+                <option value="github_issue">GitHub - Nuevo Issue (issues.opened)</option>
+                <option value="schedule">Programado (Cron)</option>
             </select>
         </div>
 
@@ -54,7 +53,7 @@
     </div>
 
     <!-- Condiciones -->
-    <div class="bg-[#111827] border border-white/5 rounded-xl p-6">
+    <div x-show="triggerType === 'github_issue'" x-cloak class="bg-[#111827] border border-white/5 rounded-xl p-6">
         <div class="flex justify-between items-center mb-4">
             <div>
                 <h2 class="text-lg font-medium text-white mb-1">Condiciones (Opcional)</h2>
@@ -68,13 +67,14 @@
         <div class="space-y-3">
             <template x-for="(condition, index) in conditions" :key="condition.id">
                 <div class="flex items-center space-x-2 bg-[#0B0F19] p-2 rounded-lg border border-white/5">
-                    <input type="text" :name="`conditions[${index}][field]`" x-model="condition.field" placeholder="Campo (ej. branch)" class="flex-1 min-w-0 bg-transparent border-0 py-1.5 px-3 text-sm text-gray-200 placeholder-gray-600 focus:ring-0">
+                    <input type="text" list="available_fields" :name="`conditions[${index}][field]`" x-model="condition.field" placeholder="Selecciona o escribe el campo..." class="flex-1 min-w-0 bg-transparent border-0 py-1.5 px-3 text-sm text-gray-200 placeholder-gray-600 focus:ring-0">
                     <select :name="`conditions[${index}][operator]`" x-model="condition.operator" class="w-32 bg-[#111827] border border-white/10 rounded py-1.5 px-2 text-sm text-gray-200 focus:ring-indigo-500 focus:border-indigo-500">
                         <option value="equals">Igual a</option>
-                        <option value="contains">Contiene</option>
                         <option value="not_equals">Diferente de</option>
+                        <option value="contains">Contiene</option>
+                        <option value="exists">Existe</option>
                     </select>
-                    <input type="text" :name="`conditions[${index}][value]`" x-model="condition.value" placeholder="Valor (ej. main)" class="flex-1 min-w-0 bg-transparent border-0 py-1.5 px-3 text-sm text-gray-200 placeholder-gray-600 focus:ring-0">
+                    <input type="text" :name="`conditions[${index}][value]`" x-model="condition.value" placeholder="Valor (ej. urgente)" class="flex-1 min-w-0 bg-transparent border-0 py-1.5 px-3 text-sm text-gray-200 placeholder-gray-600 focus:ring-0">
                     <button type="button" @click="removeCondition(condition.id)" class="p-1.5 text-gray-500 hover:text-red-400 transition-colors">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
@@ -83,6 +83,16 @@
             <div x-show="conditions.length === 0" class="text-sm text-gray-500 text-center py-4 border border-dashed border-white/10 rounded-lg">
                 No hay condiciones. El flujo se ejecutará siempre.
             </div>
+
+            <!-- Lista de sugerencias para los campos -->
+            <datalist id="available_fields">
+                <option value="trigger.issue.title">Título del Issue</option>
+                <option value="trigger.issue.body">Cuerpo del Issue</option>
+                <option value="trigger.issue.state">Estado (open/closed)</option>
+                <option value="trigger.issue.user.login">Usuario que creó el issue</option>
+                <option value="trigger.repository.name">Nombre del Repositorio</option>
+                <option value="trigger.repository.full_name">Nombre completo del repo</option>
+            </datalist>
         </div>
     </div>
 
