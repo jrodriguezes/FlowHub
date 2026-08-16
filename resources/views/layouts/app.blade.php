@@ -54,6 +54,13 @@
                     </svg>
                     Historial
                 </a>
+                
+                <a href="{{ route('profile.index') }}" class="{{ request()->routeIs('profile.*') ? 'bg-indigo-500/10 text-indigo-400' : 'text-gray-400 hover:bg-white/5 hover:text-gray-200' }} flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors mt-2">
+                    <svg class="w-5 h-5 mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    Mi Perfil
+                </a>
             </nav>
             
             <div class="p-4 border-t border-white/5">
