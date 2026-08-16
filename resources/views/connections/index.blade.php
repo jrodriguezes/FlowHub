@@ -123,18 +123,18 @@
                     </div>
                     <form action="{{ route('connections.destroy', $githubConnection->id) }}" method="POST" onsubmit="return confirm('¿Seguro que deseas desconectar tu cuenta de GitHub?')">
                         @csrf
-                        @method('DELETE')
+                        @method('PATCH')
                         <button type="submit" class="inline-flex items-center px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-medium rounded-lg transition-colors border border-red-500/20">
                             Desconectar
                         </button>
                     </form>
                 @else
                     <div class="text-xs text-gray-500">
-                        (Próximamente Módulo 4)
+                        Requiere permisos OAuth
                     </div>
-                    <button disabled class="inline-flex items-center px-3 py-1.5 bg-white/5 text-gray-500 text-xs font-medium rounded-lg cursor-not-allowed border border-white/5">
+                    <a href="{{ route('github.redirect') }}" class="inline-flex items-center px-3 py-1.5 bg-white/10 hover:bg-white/15 text-white text-xs font-medium rounded-lg transition-colors border border-white/10">
                         Conectar ahora
-                    </button>
+                    </a>
                 @endif
             </div>
         </div>
