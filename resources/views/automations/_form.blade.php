@@ -115,12 +115,12 @@
                     <div class="flex-1 space-y-3">
                         <select :name="`actions[${index}][type]`" x-model="action.type" class="block w-full bg-[#111827] border border-white/10 rounded py-2 px-3 text-sm text-gray-200 focus:ring-indigo-500 focus:border-indigo-500">
                             <option value="">Selecciona una acción...</option>
+                            <option value="github.create_issue">GitHub - Crear incidencia</option>
                             <option value="gmail_send">Gmail - Enviar Correo</option>
                             <option value="slack_message">Slack - Enviar Mensaje</option>
                             <option value="discord_webhook">Discord - Webhook</option>
                         </select>
                         
-                        <!-- Selector de Conexión (Aparece solo si hay acción) -->
                         <div x-show="action.type !== ''" class="mt-2">
                             <label class="block text-xs font-medium text-gray-400 mb-1">Cuenta/Conexión a utilizar</label>
                             <select :name="`actions[${index}][service_connection_id]`" x-model="action.service_connection_id" class="block w-full bg-[#111827] border border-white/10 rounded py-2 px-3 text-sm text-gray-200 focus:ring-indigo-500 focus:border-indigo-500">
@@ -129,10 +129,26 @@
                                     <option value="{{ $conn->id }}">{{ ucfirst($conn->provider) }} - {{ $conn->external_id ?? 'Cuenta conectada' }}</option>
                                 @endforeach
                             </select>
+                            <p x-show="action.type === 'github.create_issue'" class="text-[10px] text-gray-500 mt-1">Usa una conexión de GitHub activa.</p>
+                        </div>
+
+                        <div x-show="action.type === 'github.create_issue'" x-transition class="mt-2 bg-[#111827] border border-white/5 rounded p-3 space-y-2">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-400 mb-1">Repositorio (owner/repo)</label>
+                                <input type="text" :name="`actions[${index}][config][repository]`" x-model="action.config.repository" placeholder="octocat/Hello-World" class="block w-full bg-[#0B0F19] border border-white/10 rounded py-1.5 px-2 text-sm text-gray-200 focus:ring-indigo-500 focus:border-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-400 mb-1">Título</label>
+                                <input type="text" :name="`actions[${index}][config][title]`" x-model="action.config.title" placeholder="Nuevo issue: {{ '${trigger.issue.title}' }}" class="block w-full bg-[#0B0F19] border border-white/10 rounded py-1.5 px-2 text-sm text-gray-200 focus:ring-indigo-500 focus:border-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-400 mb-1">Descripción</label>
+                                <textarea :name="`actions[${index}][config][body]`" x-model="action.config.body" rows="2" placeholder="Detalle del issue..." class="block w-full bg-[#0B0F19] border border-white/10 rounded py-1.5 px-2 text-sm text-gray-200 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+                            </div>
+                            <p class="text-[10px] text-gray-500">Puedes interpolar variables como {{ '${trigger.issue.title}' }}.</p>
                         </div>
                         
-                        <!-- Configuraciones dinámicas basadas en la acción -->
-                        <div x-show="action.type !== ''" x-transition class="mt-2 bg-[#111827] border border-white/5 rounded p-3">
+                        <div x-show="action.type !== '' && action.type !== 'github.create_issue'" x-transition class="mt-2 bg-[#111827] border border-white/5 rounded p-3">
                             <label class="block text-xs font-medium text-gray-400 mb-1">Configuración / Mensaje</label>
                             <textarea :name="`actions[${index}][config][message]`" x-model="action.config.message" rows="2" placeholder="Ej: Hubo un nuevo push en el repositorio..." class="block w-full bg-[#0B0F19] border border-white/10 rounded py-1.5 px-2 text-sm text-gray-200 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
                             <p class="text-[10px] text-gray-500 mt-1">Puedes usar variables como {{ '${trigger.branch}' }}</p>
