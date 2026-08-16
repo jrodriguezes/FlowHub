@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AutomationController;
 use App\Http\Controllers\AutomationExecutionController;
 use App\Http\Controllers\ServiceConnectionController;
+use App\Http\Controllers\GitHubAuthController;
 use App\Http\Controllers\GoogleAuthController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TwoFactorChallengeController;
@@ -51,7 +52,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/connections', [ServiceConnectionController::class, 'index'])->name('connections.index');
     Route::get('/connections/{serviceConnection}', [ServiceConnectionController::class, 'show'])->name('connections.show');
     Route::put('/connections/{serviceConnection}', [ServiceConnectionController::class, 'update'])->name('connections.update');
-    Route::patch('/connections/{serviceConnection}', [ServiceConnectionController::class, 'destroy'])->name('connections.destroy');
+    Route::match(['patch', 'delete'], '/connections/{serviceConnection}', [ServiceConnectionController::class, 'destroy'])->name('connections.destroy');
 
     // Executions pages & crud
     Route::get('/executions', [AutomationExecutionController::class, 'index'])->name('executions.index');
@@ -60,7 +61,10 @@ Route::middleware('auth')->group(function () {
     Route::delete('/executions/{automationExecution}', [AutomationExecutionController::class, 'destroy'])->name('executions.destroy');
 
     // Google services
-    Route::get('/auth/google', [GoogleAuthController::class, 'redirectToGoogle'])->name('google.redirect'); // user button to redirect to google servers(connect with google)
-    Route::get('/auth/google/callback', [GoogleAuthController::class, 'googleCallback'])->name('google.callback'); // the url where the user is redirected after the authentication and give permissions 
+    Route::get('/auth/google', [GoogleAuthController::class, 'redirectToGoogle'])->name('google.redirect');
+    Route::get('/auth/google/callback', [GoogleAuthController::class, 'googleCallback'])->name('google.callback');
+
+    Route::get('/auth/github', [GitHubAuthController::class, 'redirect'])->name('github.redirect');
+    Route::get('/auth/github/callback', [GitHubAuthController::class, 'callback'])->name('github.callback');
 });
 
