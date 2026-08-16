@@ -21,7 +21,17 @@ class AuthController extends Controller
             'password' => ['required'],
         ]);
 
-        if (Auth::attempt($credentials)) {
+        // if the creedentials are valid 
+        if (Auth::validate($credentials)) {
+            $user = User::where('email', $request->email)->first();
+            // if user have 2fa enabled
+            if ($user->two_factor_secret && $user->two_factor_confirmed) {
+                $request->session()->put('2fa:user:id', $user->id);
+                return redirect()->route('2fa.challenge');
+            }
+
+            // if not the user will be logged normally
+            Auth::login($user);
             $request->session()->regenerate();
             return redirect()->intended('home');
         }
