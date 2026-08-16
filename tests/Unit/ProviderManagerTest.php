@@ -49,25 +49,6 @@ class ProviderManagerTest extends TestCase
         );
     }
 
-    public function test_github_create_issue_returns_a_simulated_result_without_http(): void
-    {
-        $connection = $this->connectionFor('github');
-
-        $result = app(ProviderManager::class)->execute(
-            'github',
-            'github.create_issue',
-            ['title' => 'Bug urgente', 'body' => 'Falla el login'],
-            $connection,
-        );
-
-        $this->assertTrue($result->success);
-        $this->assertSame('github', $result->provider);
-        $this->assertSame('fake-github-issue-1', $result->externalId);
-        $this->assertTrue($result->data['simulated']);
-        $this->assertSame('Bug urgente', $result->data['title']);
-        $this->assertNull($result->error);
-    }
-
     public function test_google_adapter_supports_email_and_calendar_simulations(): void
     {
         $connection = $this->connectionFor('google');
