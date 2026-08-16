@@ -6,6 +6,8 @@ use App\Http\Controllers\AutomationExecutionController;
 use App\Http\Controllers\ServiceConnectionController;
 use App\Http\Controllers\GoogleAuthController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\TwoFactorChallengeController;
+use App\Http\Controllers\ProfileController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -16,6 +18,11 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
     Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
     Route::post('/register', [AuthController::class, 'register']);
+
+    // 2FA Challenge Frontend Route
+    Route::get('/2fa-challenge', [TwoFactorChallengeController::class, 'show'])->name('2fa.challenge');
+
+    Route::post('/2fa-challenge', [TwoFactorChallengeController::class, 'verify'])->name('2fa.challenge.verify');
 });
 
 Route::middleware('auth')->group(function () {
@@ -23,6 +30,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/home', function () {
         return view('home');
     })->name('home');
+
+    // profile page
+    Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');
+    Route::post('/profile/2fa/enable', [ProfileController::class, 'enable'])->name('2fa.enable');
+    Route::post('/profile/2fa/confirm', [ProfileController::class, 'confirm'])->name('2fa.confirm');
+    Route::post('/profile/2fa/disable', [ProfileController::class, 'disable'])->name('2fa.disable');
 
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
