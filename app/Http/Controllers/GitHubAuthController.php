@@ -19,6 +19,7 @@ class GitHubAuthController extends Controller
 
     public function redirect()
     {
+        // here we tell to github which permissions we want
         return Socialite::driver('github')
             ->scopes($this->scopes)
             ->redirect();

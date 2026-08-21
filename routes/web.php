@@ -52,7 +52,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/connections', [ServiceConnectionController::class, 'index'])->name('connections.index');
     Route::get('/connections/{serviceConnection}', [ServiceConnectionController::class, 'show'])->name('connections.show');
     Route::put('/connections/{serviceConnection}', [ServiceConnectionController::class, 'update'])->name('connections.update');
-    Route::match(['patch', 'delete'], '/connections/{serviceConnection}', [ServiceConnectionController::class, 'destroy'])->name('connections.destroy');
+    Route::patch('/connections/{serviceConnection}', [ServiceConnectionController::class, 'destroy'])->name('connections.destroy');
 
     // Executions pages & crud
     Route::get('/executions', [AutomationExecutionController::class, 'index'])->name('executions.index');
@@ -61,10 +61,15 @@ Route::middleware('auth')->group(function () {
     Route::delete('/executions/{automationExecution}', [AutomationExecutionController::class, 'destroy'])->name('executions.destroy');
 
     // Google services
-    Route::get('/auth/google', [GoogleAuthController::class, 'redirectToGoogle'])->name('google.redirect');
-    Route::get('/auth/google/callback', [GoogleAuthController::class, 'googleCallback'])->name('google.callback');
+    // user button to redirect to google servers(connect with google)
+    Route::get('/auth/google', [GoogleAuthController::class, 'redirectToGoogle'])->name('google.redirect'); 
+    // google server redirect to this url after user authenticates and authorize the app
+    Route::get('/auth/google/callback', [GoogleAuthController::class, 'googleCallback'])->name('google.callback'); 
 
-    Route::get('/auth/github', [GitHubAuthController::class, 'redirect'])->name('github.redirect');
-    Route::get('/auth/github/callback', [GitHubAuthController::class, 'callback'])->name('github.callback');
+    // Github services
+    // user button to redirect to github servers(connect with github)
+    Route::get('/auth/github', [GitHubAuthController::class, 'redirect'])->name('github.redirect'); 
+    // github server redirect to this url after user authenticates and authorize the app
+    Route::get('/auth/github/callback', [GitHubAuthController::class, 'callback'])->name('github.callback'); 
 });
 
