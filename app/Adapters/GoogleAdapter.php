@@ -22,7 +22,7 @@ class GoogleAdapter extends AbstractProviderAdapter
 
     protected function perform(string $actionType, array $parameters, ServiceConnection $connection): ActionResult
     {
-        // M09 reemplazará estas respuestas simuladas por Gmail API y Calendar API.
+        // M09 reemplazara estas respuestas simuladas por Gmail API y Calendar API.
         return match ($actionType) {
             'google.send_email' => ActionResult::ok(
                 provider: $this->provider(),
