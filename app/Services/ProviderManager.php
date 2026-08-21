@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Contracts\ProviderAdapter;
 use App\DTO\ActionResult;
-use App\Exceptions\UnsupportedProviderException;
 use App\Models\ServiceConnection;
 use Illuminate\Contracts\Container\Container;
 
@@ -31,7 +30,7 @@ class ProviderManager
         $adapterClass = $this->providers[$provider] ?? null;
 
         if ($adapterClass === null) {
-            throw new UnsupportedProviderException($provider);
+            throw new \RuntimeException("No hay un adaptador registrado para el proveedor [{$provider}].");
         }
 
         return $this->container->make($adapterClass);
