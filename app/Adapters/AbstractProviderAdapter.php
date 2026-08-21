@@ -5,8 +5,7 @@ namespace App\Adapters;
 use App\Contracts\ProviderAdapter;
 use App\DTO\ActionResult;
 use App\Enums\ConnectionStatus;
-use App\Exceptions\IncompatibleConnectionException;
-use App\Exceptions\UnsupportedActionException;
+
 use App\Models\ServiceConnection;
 
 abstract class AbstractProviderAdapter implements ProviderAdapter
@@ -17,8 +16,8 @@ abstract class AbstractProviderAdapter implements ProviderAdapter
     {
         $this->assertCompatibleConnection($connection);
 
-        if (! in_array($actionType, $this->supportedActions(), true)) {
-            throw new UnsupportedActionException($this->provider(), $actionType);
+        if (!in_array($actionType, $this->supportedActions(), true)) {
+            throw new \RuntimeException("La acción '{$actionType}' no está soportada por el proveedor [{$this->provider()}].");
         }
 
         return $this->perform($actionType, $parameters, $connection);
@@ -36,11 +35,11 @@ abstract class AbstractProviderAdapter implements ProviderAdapter
     protected function assertCompatibleConnection(ServiceConnection $connection): void
     {
         if ($connection->provider !== $this->provider()) {
-            throw new IncompatibleConnectionException($this->provider(), 'proveedor distinto');
+            throw new \RuntimeException("La conexión no es válida para el proveedor [{$this->provider()}]: proveedor distinto.");
         }
 
         if ($connection->status !== ConnectionStatus::ACTIVE) {
-            throw new IncompatibleConnectionException($this->provider(), 'conexión inactiva o revocada');
+            throw new \RuntimeException("La conexión no es válida para el proveedor [{$this->provider()}]: conexión inactiva o revocada.");
         }
     }
 }
