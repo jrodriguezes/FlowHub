@@ -9,6 +9,7 @@ use App\Http\Controllers\GoogleAuthController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TwoFactorChallengeController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\GitHubWebhookController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -60,14 +61,16 @@ Route::middleware('auth')->group(function () {
 
     // Google services
     // user button to redirect to google servers(connect with google)
-    Route::get('/auth/google', [GoogleAuthController::class, 'redirectToGoogle'])->name('google.redirect'); 
+    Route::get('/auth/google', [GoogleAuthController::class, 'redirectToGoogle'])->name('google.redirect');
     // google server redirect to this url after user authenticates and authorize the app
-    Route::get('/auth/google/callback', [GoogleAuthController::class, 'googleCallback'])->name('google.callback'); 
+    Route::get('/auth/google/callback', [GoogleAuthController::class, 'googleCallback'])->name('google.callback');
 
     // Github services
     // user button to redirect to github servers(connect with github)
-    Route::get('/auth/github', [GitHubAuthController::class, 'redirect'])->name('github.redirect'); 
+    Route::get('/auth/github', [GitHubAuthController::class, 'redirect'])->name('github.redirect');
     // github server redirect to this url after user authenticates and authorize the app
-    Route::get('/auth/github/callback', [GitHubAuthController::class, 'callback'])->name('github.callback'); 
+    Route::get('/auth/github/callback', [GitHubAuthController::class, 'callback'])->name('github.callback');
 });
+
+Route::post('/webhooks/github', [GitHubWebhookController::class, 'handle'])->name('webhooks.github');
 
