@@ -7,15 +7,17 @@ window.automationManager = function(storeUrl) {
         showPanel: false,
         isEdit: false,
         formAction: storeUrl,
+        errors: [],
         
         openCreate() {
             this.isEdit = false;
             this.formAction = storeUrl;
+            this.errors = [];
             document.getElementById('automation-form').reset();
             
             window.dispatchEvent(new CustomEvent('load-automation', {
                 detail: {
-                    triggerType: 'github_push',
+                    triggerType: 'github_issue',
                     conditions: [],
                     actions: []
                 }
@@ -27,6 +29,7 @@ window.automationManager = function(storeUrl) {
         openEdit(automation) {
             this.isEdit = true;
             this.formAction = '/automations/' + automation.id;
+            this.errors = [];
             
             document.getElementById('name').value = automation.name;
             document.getElementById('description').value = automation.description || '';
@@ -38,16 +41,56 @@ window.automationManager = function(storeUrl) {
                 document.getElementById('cron_expression').value = '* * * * *';
             }
             
-            // Enviar datos al formulario de Alpine
             window.dispatchEvent(new CustomEvent('load-automation', {
                 detail: {
-                    triggerType: automation.trigger ? automation.trigger.type : 'github_push',
+                    triggerType: automation.trigger ? automation.trigger.type : 'github_issue',
                     conditions: automation.conditions || [],
                     actions: automation.actions || []
                 }
             }));
             
             this.showPanel = true;
+        },
+
+        async submitForm(e) {
+            this.errors = [];
+            const form = e.target;
+            const formData = new FormData(form);
+            
+            try {
+                const response = await fetch(this.formAction, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    window.location.reload();
+                    return;
+                }
+                
+                const data = await response.json();
+                
+                if (response.status === 422) {
+                    // Collect validation errors
+                    const allErrors = [];
+                    for (const key in data.errors) {
+                        data.errors[key].forEach(msg => allErrors.push(msg));
+                    }
+                    this.errors = allErrors;
+                    
+                    // Scroll to top of modal to see errors
+                    const formContainer = document.querySelector('.flex-1.px-6.py-6.overflow-y-auto');
+                    if (formContainer) formContainer.scrollTop = 0;
+                } else {
+                    this.errors = [data.message || 'Error inesperado del servidor.'];
+                }
+            } catch (err) {
+                this.errors = ['Error de conexión.'];
+            }
         }
     }
 }
