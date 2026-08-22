@@ -172,7 +172,7 @@
                                 </div>
 
                                 <!-- Formulario Principal -->
-                                <form id="automation-form" :action="formAction" method="POST"
+                                <form id="automation-form" :action="formAction" method="POST" @submit.prevent="submitForm"
                                     class="flex-1 overflow-y-auto flex flex-col">
                                     @csrf
                                     <template x-if="isEdit">
@@ -180,6 +180,17 @@
                                     </template>
 
                                     <div class="flex-1 px-6 py-6 overflow-y-auto">
+                                        <!-- Validation Errors -->
+                                        <template x-if="errors.length > 0">
+                                            <div class="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl mb-6">
+                                                <ul class="list-disc pl-5 space-y-1 text-sm">
+                                                    <template x-for="error in errors">
+                                                        <li x-text="error"></li>
+                                                    </template>
+                                                </ul>
+                                            </div>
+                                        </template>
+
                                         @include('automations._form')
                                     </div>
 
