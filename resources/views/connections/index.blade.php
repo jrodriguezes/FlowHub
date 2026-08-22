@@ -65,9 +65,9 @@
                     <div class="text-xs text-gray-500">
                         Conectado el {{ $googleConnection->created_at->format('d M Y') }}
                     </div>
-                    <form action="{{ route('connections.update', $googleConnection->id) }}" method="POST" onsubmit="return confirm('¿Seguro que deseas desconectar tu cuenta de Google?')">
+                    <form action="{{ route('connections.destroy', $googleConnection->id) }}" method="POST" onsubmit="return confirm('¿Seguro que deseas desconectar tu cuenta de Google?')">
                         @csrf
-                        @method('PATCH')
+                        @method('DELETE')
                         <button type="submit" class="inline-flex items-center px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-medium rounded-lg transition-colors border border-red-500/20">
                             Desconectar
                         </button>
@@ -123,7 +123,7 @@
                     </div>
                     <form action="{{ route('connections.destroy', $githubConnection->id) }}" method="POST" onsubmit="return confirm('¿Seguro que deseas desconectar tu cuenta de GitHub?')">
                         @csrf
-                        @method('PATCH')
+                        @method('DELETE')
                         <button type="submit" class="inline-flex items-center px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-medium rounded-lg transition-colors border border-red-500/20">
                             Desconectar
                         </button>
