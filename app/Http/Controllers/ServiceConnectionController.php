@@ -22,26 +22,6 @@ class ServiceConnectionController extends Controller
         return view('connections.index', ['connections' => $connections]);
     }
 
-    public function show(ServiceConnection $serviceConnection): JsonResponse
-    {
-        $this->authorize('view', $serviceConnection);
-
-        return response()->json(['data' => $serviceConnection]);
-    }
-
-    public function update(Request $request, ServiceConnection $serviceConnection): JsonResponse
-    {
-        $this->authorize('update', $serviceConnection);
-
-        $validated = $request->validate([
-            'status' => ['sometimes', 'string'],
-        ]);
-
-        $serviceConnection->update($validated);
-
-        return response()->json(['data' => $serviceConnection->fresh()]);
-    }
-
     public function destroy(ServiceConnection $serviceConnection)
     {
         $this->authorize('delete', $serviceConnection);
