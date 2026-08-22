@@ -6,6 +6,7 @@ use App\DTO\ActionResult;
 use App\Models\ServiceConnection;
 use \Illuminate\Support\Facades\Http;
 use \Illuminate\Http\Client\Response;
+use \Illuminate\Support\Facades\Log;
 class GoogleAdapter extends AbstractProviderAdapter
 {
     public function provider(): string
@@ -44,7 +45,7 @@ class GoogleAdapter extends AbstractProviderAdapter
         }
 
         // we build the message with the standart format of the emails
-        $message = "To {$to} \r\n";
+        $message = "To: {$to}\r\n";
         $message .= "Subject: =?utf-8?B?" . base64_encode($subject) . "?=\r\n";
         $message .= "Content-Type: text/plain; charset=utf-8\r\n\r\n";
         $message .= $body;
@@ -76,6 +77,26 @@ class GoogleAdapter extends AbstractProviderAdapter
     // we prepare our mail carrier 
     private function googleHttp(ServiceConnection $connection)
     {
+        // check if token is expired and refresh it
+        if ($connection->expires_at && now()->parse($connection->expires_at)->isPast() && $connection->refresh_token) {
+            $refreshResponse = Http::post('https://oauth2.googleapis.com/token', [
+                'client_id' => config('services.google.client_id'),
+                'client_secret' => config('services.google.client_secret'),
+                'refresh_token' => $connection->refresh_token,
+                'grant_type' => 'refresh_token',
+            ]);
+
+            if ($refreshResponse->successful()) {
+                $data = $refreshResponse->json();
+                $connection->update([
+                    'access_token' => $data['access_token'],
+                    'expires_at' => now()->addSeconds($data['expires_in']),
+                ]);
+            } else {
+                Log::error('Google Token Refresh Failed', $refreshResponse->json() ?? []);
+            }
+        }
+
         // we deactive the cerification ssl in case of an issue with the domain of google
         $verify = config('services.google.guzzle.verify', true);
 
