@@ -116,9 +116,8 @@
                         <select :name="`actions[${index}][type]`" x-model="action.type" class="block w-full bg-[#111827] border border-white/10 rounded py-2 px-3 text-sm text-gray-200 focus:ring-indigo-500 focus:border-indigo-500">
                             <option value="">Selecciona una acción...</option>
                             <option value="github.create_issue">GitHub - Crear incidencia</option>
-                            <option value="gmail_send">Gmail - Enviar Correo</option>
-                            <option value="slack_message">Slack - Enviar Mensaje</option>
-                            <option value="discord_webhook">Discord - Webhook</option>
+                            <option value="google.send_email">Google - Enviar Correo (Gmail)</option>
+                            <option value="google.create_calendar_event">Google - Crear Evento (Calendar)</option>
                         </select>
                         
                         <div x-show="action.type !== ''" class="mt-2">
@@ -147,8 +146,47 @@
                             </div>
                             <p class="text-[10px] text-gray-500">Puedes interpolar variables como {{ '${trigger.issue.title}' }}.</p>
                         </div>
+
+                        <!-- Formulario para Gmail (google.send_email) -->
+                        <div x-show="action.type === 'google.send_email'" x-transition class="mt-2 bg-[#111827] border border-white/5 rounded p-3 space-y-2">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-400 mb-1">Destinatario (Para)</label>
+                                <input type="email" :name="`actions[${index}][config][to]`" x-model="action.config.to" placeholder="ejemplo@correo.com" class="block w-full bg-[#0B0F19] border border-white/10 rounded py-1.5 px-2 text-sm text-gray-200 focus:ring-indigo-500 focus:border-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-400 mb-1">Asunto</label>
+                                <input type="text" :name="`actions[${index}][config][subject]`" x-model="action.config.subject" placeholder="Nuevo reporte de {{ '${trigger.repository.name}' }}" class="block w-full bg-[#0B0F19] border border-white/10 rounded py-1.5 px-2 text-sm text-gray-200 focus:ring-indigo-500 focus:border-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-400 mb-1">Cuerpo del correo</label>
+                                <textarea :name="`actions[${index}][config][body]`" x-model="action.config.body" rows="3" placeholder="Escribe el mensaje..." class="block w-full bg-[#0B0F19] border border-white/10 rounded py-1.5 px-2 text-sm text-gray-200 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+                            </div>
+                            <p class="text-[10px] text-gray-500">Puedes usar interpolación como {{ '${trigger.issue.body}' }} en todos los campos.</p>
+                        </div>
+
+                        <!-- Formulario para Google Calendar (google.create_calendar_event) -->
+                        <div x-show="action.type === 'google.create_calendar_event'" x-transition class="mt-2 bg-[#111827] border border-white/5 rounded p-3 space-y-2">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-400 mb-1">Título del evento</label>
+                                <input type="text" :name="`actions[${index}][config][summary]`" x-model="action.config.summary" placeholder="Reunión de emergencia" class="block w-full bg-[#0B0F19] border border-white/10 rounded py-1.5 px-2 text-sm text-gray-200 focus:ring-indigo-500 focus:border-indigo-500">
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-400 mb-1">Fecha/Hora de Inicio</label>
+                                    <input type="datetime-local" :name="`actions[${index}][config][start]`" x-model="action.config.start" class="block w-full bg-[#0B0F19] border border-white/10 rounded py-1.5 px-2 text-sm text-gray-200 focus:ring-indigo-500 focus:border-indigo-500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-400 mb-1">Fecha/Hora de Fin</label>
+                                    <input type="datetime-local" :name="`actions[${index}][config][end]`" x-model="action.config.end" class="block w-full bg-[#0B0F19] border border-white/10 rounded py-1.5 px-2 text-sm text-gray-200 focus:ring-indigo-500 focus:border-indigo-500">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-400 mb-1">Zona Horaria (Opcional)</label>
+                                <input type="text" :name="`actions[${index}][config][timezone]`" x-model="action.config.timezone" placeholder="America/Costa_Rica" class="block w-full bg-[#0B0F19] border border-white/10 rounded py-1.5 px-2 text-sm text-gray-200 focus:ring-indigo-500 focus:border-indigo-500">
+                            </div>
+                        </div>
                         
-                        <div x-show="action.type !== '' && action.type !== 'github.create_issue'" x-transition class="mt-2 bg-[#111827] border border-white/5 rounded p-3">
+                        <div x-show="action.type !== '' && action.type !== 'github.create_issue' && action.type !== 'google.send_email' && action.type !== 'google.create_calendar_event'" x-transition class="mt-2 bg-[#111827] border border-white/5 rounded p-3">
                             <label class="block text-xs font-medium text-gray-400 mb-1">Configuración / Mensaje</label>
                             <textarea :name="`actions[${index}][config][message]`" x-model="action.config.message" rows="2" placeholder="Ej: Hubo un nuevo push en el repositorio..." class="block w-full bg-[#0B0F19] border border-white/10 rounded py-1.5 px-2 text-sm text-gray-200 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
                             <p class="text-[10px] text-gray-500 mt-1">Puedes usar variables como {{ '${trigger.branch}' }}</p>

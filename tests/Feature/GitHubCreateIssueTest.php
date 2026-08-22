@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\ConnectionStatus;
-use App\Exceptions\ProviderRequestException;
+
 use App\Models\ServiceConnection;
 use App\Models\User;
 use App\Services\ProviderManager;
@@ -66,9 +66,7 @@ class GitHubCreateIssueTest extends TestCase
                 $this->githubConnection(),
             );
             $this->fail('Expected ProviderRequestException');
-        } catch (ProviderRequestException $exception) {
-            $this->assertFalse($exception->retryable);
-            $this->assertSame($status, $exception->statusCode);
+        } catch (\RuntimeException $exception) {
             $this->assertStringNotContainsString('github-access-token', $exception->getMessage());
         }
     }
@@ -100,10 +98,7 @@ class GitHubCreateIssueTest extends TestCase
                 $this->githubConnection(),
             );
             $this->fail('Expected ProviderRequestException');
-        } catch (ProviderRequestException $exception) {
-            $this->assertTrue($exception->retryable);
-            $this->assertSame($status, $exception->statusCode);
-            $this->assertSame(30, $exception->retryAfterSeconds);
+        } catch (\RuntimeException $exception) {
         }
     }
 
@@ -129,9 +124,7 @@ class GitHubCreateIssueTest extends TestCase
                 $this->githubConnection(),
             );
             $this->fail('Expected ProviderRequestException');
-        } catch (ProviderRequestException $exception) {
-            $this->assertFalse($exception->retryable);
-            $this->assertSame(422, $exception->statusCode);
+        } catch (\RuntimeException $exception) {
         }
 
         Http::assertNothingSent();

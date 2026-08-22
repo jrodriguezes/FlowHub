@@ -21,7 +21,19 @@ trait ValidatesAutomationActions
             'actions.*.config.title' => ['required_if:actions.*.type,github.create_issue', 'nullable', 'string', 'max:255'],
             'actions.*.config.body' => ['nullable', 'string'],
             'actions.*.config.description' => ['nullable', 'string'],
+
+            // gmail validations
+            'actions.*.config.to' => ['required_if:actions.*.type,google.send_email', 'nullable', 'email', 'max:255'],
+            'actions.*.config.subject' => ['required_if:actions.*.type,google.send_email', 'nullable', 'string', 'max:255'],
+
+            // calendar validations
+            'actions.*.config.summary' => ['required_if:actions.*.type,google.create_calendar_event', 'nullable', 'string', 'max:255'],
+            'actions.*.config.start' => ['required_if:actions.*.type,google.create_calendar_event', 'nullable', 'date'],
+            'actions.*.config.end' => ['required_if:actions.*.type,google.create_calendar_event', 'nullable', 'date', 'after:actions.*.config.start'],
+            'actions.*.config.timezone' => ['nullable', 'string', 'timezone'],
+
         ];
+
     }
 
     protected function validateGitHubCreateIssueConnections($validator): void
@@ -34,7 +46,7 @@ trait ValidatesAutomationActions
 
                 $connectionId = $action['service_connection_id'] ?? null;
 
-                if (! $connectionId) {
+                if (!$connectionId) {
                     $validator->errors()->add(
                         "actions.{$index}.service_connection_id",
                         'La acción de GitHub requiere una conexión activa.',
@@ -49,7 +61,7 @@ trait ValidatesAutomationActions
                     ->first();
 
                 if (
-                    ! $connection
+                    !$connection
                     || $connection->provider !== 'github'
                     || $connection->status !== ConnectionStatus::ACTIVE
                 ) {

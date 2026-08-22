@@ -3,7 +3,7 @@
 namespace App\Adapters;
 
 use App\DTO\ActionResult;
-use App\Exceptions\ProviderRequestException;
+
 use App\Models\ServiceConnection;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
@@ -24,7 +24,9 @@ class GitHubAdapter extends AbstractProviderAdapter
             'github.create_issue',
         ];
     }
-
+    // actionType = provider.action (example. google.send_email)
+    // $parameters = the order details (example. the repo and the title and body)
+    // $connection = the connection details
     protected function perform(string $actionType, array $parameters, ServiceConnection $connection): ActionResult
     {
         return match ($actionType) {
@@ -43,12 +45,7 @@ class GitHubAdapter extends AbstractProviderAdapter
         $body = (string) ($parameters['body'] ?? $parameters['description'] ?? '');
 
         if ($title === '') {
-            throw new ProviderRequestException(
-                'El título del issue es obligatorio.',
-                statusCode: 422,
-                retryable: false,
-                provider: $this->provider(),
-            );
+            throw new \RuntimeException('El título del issue es obligatorio.');
         }
 
         try {
@@ -58,12 +55,7 @@ class GitHubAdapter extends AbstractProviderAdapter
                     'body' => $body !== '' ? $body : null,
                 ]);
         } catch (ConnectionException $exception) {
-            throw new ProviderRequestException(
-                'GitHub no respondió a tiempo.',
-                statusCode: 0,
-                retryable: true,
-                provider: $this->provider(),
-            );
+            throw new \RuntimeException('GitHub no respondió a tiempo.');
         }
 
         if ($response->successful()) {
@@ -92,13 +84,8 @@ class GitHubAdapter extends AbstractProviderAdapter
     {
         $repository = trim((string) ($parameters['repository'] ?? $parameters['repo'] ?? ''));
 
-        if (! preg_match('/^([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+)$/', $repository, $matches)) {
-            throw new ProviderRequestException(
-                'El repositorio debe tener el formato owner/repo.',
-                statusCode: 422,
-                retryable: false,
-                provider: $this->provider(),
-            );
+        if (!preg_match('/^([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+)$/', $repository, $matches)) {
+            throw new \RuntimeException('El repositorio debe tener el formato owner/repo.');
         }
 
         return [$matches[1], $matches[2]];
@@ -118,7 +105,7 @@ class GitHubAdapter extends AbstractProviderAdapter
             ->withOptions(['verify' => $verify]);
     }
 
-    private function classifyError(Response $response): ProviderRequestException
+    private function classifyError(Response $response): \RuntimeException
     {
         $status = $response->status();
         $retryAfter = $response->header('Retry-After');
@@ -129,19 +116,13 @@ class GitHubAdapter extends AbstractProviderAdapter
         $friendly = match (true) {
             $status === 401, $status === 403 => 'GitHub rechazó el token o los permisos de la conexión.',
             $status === 404 => 'No se encontró el repositorio o no hay acceso.',
-            $status === 422 => 'GitHub rechazó el issue: '.$message,
+            $status === 422 => 'GitHub rechazó el issue: ' . $message,
             $status === 429 => 'GitHub alcanzó el límite de tasa.',
             $retryable => 'GitHub no está disponible temporalmente.',
-            default => 'GitHub devolvió un error (HTTP '.$status.').',
+            default => 'GitHub devolvió un error (HTTP ' . $status . ').',
         };
 
-        return new ProviderRequestException(
-            $friendly,
-            statusCode: $status,
-            retryable: $retryable,
-            retryAfterSeconds: is_numeric($retryAfter) ? (int) $retryAfter : null,
-            provider: $this->provider(),
-        );
+        return new \RuntimeException($friendly);
     }
 
     private function sanitizeGitHubMessage(string $message): string

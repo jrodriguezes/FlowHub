@@ -26,7 +26,7 @@ class GoogleAuthController extends Controller
     public function googleCallback(Request $request)
     {
         try {
-            // socialite get the code in the url and exchanges for the user and the user token
+            // socialite get the code in the url and exchanges it for the user and the user token
             $googleUser = Socialite::driver('google')->user();
             // we search if the user had the google account created if not, we are going to create it 
             ServiceConnection::updateOrCreate(
