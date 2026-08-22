@@ -24,7 +24,9 @@ class GitHubAdapter extends AbstractProviderAdapter
             'github.create_issue',
         ];
     }
-
+    // actionType = provider.action (example. google.send_email)
+    // $parameters = the order details (example. the repo and the title and body)
+    // $connection = the connection details
     protected function perform(string $actionType, array $parameters, ServiceConnection $connection): ActionResult
     {
         return match ($actionType) {
@@ -82,7 +84,7 @@ class GitHubAdapter extends AbstractProviderAdapter
     {
         $repository = trim((string) ($parameters['repository'] ?? $parameters['repo'] ?? ''));
 
-        if (! preg_match('/^([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+)$/', $repository, $matches)) {
+        if (!preg_match('/^([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+)$/', $repository, $matches)) {
             throw new \RuntimeException('El repositorio debe tener el formato owner/repo.');
         }
 
@@ -114,10 +116,10 @@ class GitHubAdapter extends AbstractProviderAdapter
         $friendly = match (true) {
             $status === 401, $status === 403 => 'GitHub rechazó el token o los permisos de la conexión.',
             $status === 404 => 'No se encontró el repositorio o no hay acceso.',
-            $status === 422 => 'GitHub rechazó el issue: '.$message,
+            $status === 422 => 'GitHub rechazó el issue: ' . $message,
             $status === 429 => 'GitHub alcanzó el límite de tasa.',
             $retryable => 'GitHub no está disponible temporalmente.',
-            default => 'GitHub devolvió un error (HTTP '.$status.').',
+            default => 'GitHub devolvió un error (HTTP ' . $status . ').',
         };
 
         return new \RuntimeException($friendly);

@@ -20,6 +20,9 @@ class GoogleAdapter extends AbstractProviderAdapter
         ];
     }
 
+    // actionType = provider.action (example. google.send_email)
+    // $parameters = the order details (example. where the email go to and the content)
+    // $connection = the connection details
     protected function perform(string $actionType, array $parameters, ServiceConnection $connection): ActionResult
     {
         // M09 reemplazara estas respuestas simuladas por Gmail API y Calendar API.
