@@ -18,7 +18,8 @@ class ExecutionEngine
     public function process(Automation $automation, array $payload): void
     {
         // we check whether the conditions are met (example. branch == ‘main’)
-        if (!$this->evaluator->evaluate($automation->conditions ?? [], $payload)) {
+        $conditionsArray = $automation->conditions ? $automation->conditions->toArray() : [];
+        if (!$this->evaluator->evaluate($conditionsArray, $payload)) {
             // if this condition is not met, we abort and do nothing
             return;
         }
@@ -32,11 +33,12 @@ class ExecutionEngine
         ]);
 
         // we iterate on each action declared in the automation
-        foreach ($automation->actions as $action) {
+        foreach ($automation->actions as $index => $action) {
             // we declare the step in the db
             $step = ExecutionStep::create([
                 'automation_execution_id' => $execution->id,
-                'action' => $action,
+                'automation_action_id' => $action->id,
+                'position' => $index,
                 'status' => ExecutionStatus::PENDING,
             ]);
 
