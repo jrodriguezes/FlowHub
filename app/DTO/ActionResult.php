@@ -22,8 +22,11 @@ final readonly class ActionResult
     {
         return new self(
             success: true,
+            // google/github 
             provider: $provider,
+            // unique id that google assigned to that mail
             externalId: $externalId,
+            // extra data 
             data: $data,
         );
     }
