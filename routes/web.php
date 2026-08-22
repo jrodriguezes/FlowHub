@@ -50,9 +50,7 @@ Route::middleware('auth')->group(function () {
 
     // Connections pages & crud
     Route::get('/connections', [ServiceConnectionController::class, 'index'])->name('connections.index');
-    Route::get('/connections/{serviceConnection}', [ServiceConnectionController::class, 'show'])->name('connections.show');
-    Route::put('/connections/{serviceConnection}', [ServiceConnectionController::class, 'update'])->name('connections.update');
-    Route::patch('/connections/{serviceConnection}', [ServiceConnectionController::class, 'destroy'])->name('connections.destroy');
+    Route::delete('/connections/{serviceConnection}', [ServiceConnectionController::class, 'destroy'])->name('connections.destroy');
 
     // Executions pages & crud
     Route::get('/executions', [AutomationExecutionController::class, 'index'])->name('executions.index');
