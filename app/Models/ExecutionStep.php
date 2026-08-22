@@ -20,4 +20,13 @@ class ExecutionStep extends Model
         ];
     }
 
+    public function execution()
+    {
+        return $this->belongsTo(AutomationExecution::class, 'automation_execution_id');
+    }
+
+    public function action()
+    {
+        return $this->belongsTo(AutomationAction::class, 'automation_action_id');
+    }
 }

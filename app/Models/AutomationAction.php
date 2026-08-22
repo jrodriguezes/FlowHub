@@ -13,4 +13,8 @@ class AutomationAction extends Model
         return ['config' => 'array'];
     }
 
+    public function serviceConnection()
+    {
+        return $this->belongsTo(ServiceConnection::class, 'service_connection_id');
+    }
 }
