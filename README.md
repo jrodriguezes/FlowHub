@@ -146,6 +146,12 @@ Consumes jobs from the Redis queue and executes the automation actions.
 php artisan queue:work redis --queue=automations --tries=4 --timeout=120
 ```
 
+### Terminal 4: The Scheduler
+Runs due scheduled automations every minute (only enqueues jobs; actions run in the worker).
+```bash
+php artisan schedule:work
+```
+
 ### Terminal 4: The Webhook Tunnel (Pinggy)
 Exposes your local server to the internet so GitHub can send HTTP POST requests.
 ```bash

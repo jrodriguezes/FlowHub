@@ -52,6 +52,12 @@
                             @if($automation->trigger?->cron_expression)
                                 <p class="text-sm text-gray-500 mt-1 font-mono bg-white/5 px-2 py-0.5 rounded inline-block">{{ $automation->trigger->cron_expression }}</p>
                             @endif
+                            @if($automation->trigger?->timezone)
+                                <p class="text-xs text-gray-500 mt-1">Zona: {{ $automation->trigger->timezone }}</p>
+                            @endif
+                            @if($automation->trigger?->next_run_at)
+                                <p class="text-xs text-gray-500 mt-1">Próxima ejecución (UTC): {{ $automation->trigger->next_run_at->format('d/m/Y H:i:s') }}</p>
+                            @endif
                         </div>
                     </div>
                 </div>

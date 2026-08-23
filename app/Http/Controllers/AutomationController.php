@@ -8,10 +8,16 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use App\Http\Requests\StoreAutomationRequest;
+use App\Services\ScheduledTriggerPlanner;
 use Illuminate\Support\Facades\DB;
 
 class AutomationController extends Controller
 {
+    public function __construct(
+        private readonly ScheduledTriggerPlanner $scheduledTriggerPlanner,
+    ) {
+    }
+
     public function index(Request $request): View
     {
         $this->authorize('viewAny', Automation::class);
@@ -36,9 +42,10 @@ class AutomationController extends Controller
 
         DB::transaction(function () use ($request) {
             $automation = $request->user()->automations()->create($request->validated());
-            
-            $trigger = $request->trigger;
-            $trigger = $automation->trigger()->create($trigger);
+
+            $automation->trigger()->create(
+                $this->prepareTriggerData($request->input('trigger', [])),
+            );
 
             if ($request->has('conditions') && is_array($request->conditions)) {
                 foreach ($request->conditions as $index => $condition) {
@@ -73,10 +80,9 @@ class AutomationController extends Controller
 
         DB::transaction(function () use ($request, $automation) {
             $automation->update($request->validated());
-            $trigger = $request->trigger;
-            $trigger = $automation->trigger()->updateOrCreate(
+            $automation->trigger()->updateOrCreate(
                 ['id' => $automation->trigger?->id],
-                $trigger
+                $this->prepareTriggerData($request->input('trigger', [])),
             );
 
             $automation->conditions()->delete();
@@ -103,10 +109,22 @@ class AutomationController extends Controller
         $this->authorize('update', $automation);
 
         if (!$automation->is_active) {
-            // Verificacion basica: Debe tener al menos un disparador y una accion
             if (!$automation->trigger || $automation->actions()->count() === 0) {
                 return redirect()->route('automations.index')
                     ->with('error', 'No puedes activar una automatización sin disparador o sin acciones.');
+            }
+
+            if (
+                $automation->trigger->type === 'schedule'
+                && blank($automation->trigger->next_run_at)
+                && filled($automation->trigger->cron_expression)
+            ) {
+                $automation->trigger->update([
+                    'next_run_at' => $this->scheduledTriggerPlanner->computeNextRunAt(
+                        $automation->trigger->cron_expression,
+                        $automation->trigger->timezone ?: 'UTC',
+                    ),
+                ]);
             }
         }
 
@@ -124,5 +142,26 @@ class AutomationController extends Controller
         $automation->delete();
 
         return redirect()->route('automations.index');
+    }
+
+    /**
+     * @param  array<string, mixed>  $trigger
+     * @return array<string, mixed>
+     */
+    private function prepareTriggerData(array $trigger): array
+    {
+        if (($trigger['type'] ?? null) !== 'schedule') {
+            return $trigger;
+        }
+
+        $timezone = $trigger['timezone'] ?? 'UTC';
+
+        $trigger['timezone'] = $timezone;
+        $trigger['next_run_at'] = $this->scheduledTriggerPlanner->computeNextRunAt(
+            (string) $trigger['cron_expression'],
+            $timezone,
+        );
+
+        return $trigger;
     }
 }

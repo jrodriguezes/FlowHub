@@ -39,16 +39,19 @@
             </select>
         </div>
 
-        <div x-cloak x-show="triggerType === 'schedule'" x-transition class="mt-4 pt-4 border-t border-white/5">
-            <label for="cron_expression" class="block text-sm font-medium text-gray-400">Expresión Cron</label>
-            <div class="mt-1 flex rounded-lg shadow-sm">
-                <input type="text" name="trigger[cron_expression]" id="cron_expression" value="{{ old('trigger.cron_expression', $automation->trigger->cron_expression ?? '* * * * *') }}" placeholder="* * * * *" 
-                    class="flex-1 block w-full bg-[#0B0F19] border border-white/10 rounded-l-lg py-2 px-3 text-gray-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm font-mono">
-                <span class="inline-flex items-center px-3 rounded-r-lg border border-l-0 border-white/10 bg-white/5 text-gray-400 sm:text-sm">
-                    UTC
-                </span>
+        <div x-cloak x-show="triggerType === 'schedule'" x-transition class="mt-4 pt-4 border-t border-white/5 space-y-4">
+            <div>
+                <label for="cron_expression" class="block text-sm font-medium text-gray-400">Expresión Cron</label>
+                <input type="text" name="trigger[cron_expression]" id="cron_expression" value="{{ old('trigger.cron_expression', $automation->trigger->cron_expression ?? '* * * * *') }}" placeholder="* * * * *"
+                    class="mt-1 block w-full bg-[#0B0F19] border border-white/10 rounded-lg py-2 px-3 text-gray-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm font-mono">
+                <p class="mt-2 text-xs text-gray-500">Formato cron estándar de 5 partes (Minuto, Hora, Día, Mes, Día de la semana).</p>
             </div>
-            <p class="mt-2 text-xs text-gray-500">Formato cron estándar de 5 partes (Minuto, Hora, Día, Mes, Día de la semana).</p>
+            <div>
+                <label for="timezone" class="block text-sm font-medium text-gray-400">Zona horaria</label>
+                <input type="text" name="trigger[timezone]" id="timezone" value="{{ old('trigger.timezone', $automation->trigger->timezone ?? 'America/Costa_Rica') }}" placeholder="America/Costa_Rica"
+                    class="mt-1 block w-full bg-[#0B0F19] border border-white/10 rounded-lg py-2 px-3 text-gray-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                <p class="mt-2 text-xs text-gray-500">Ej: America/Costa_Rica, UTC, America/New_York</p>
+            </div>
         </div>
     </div>
 
