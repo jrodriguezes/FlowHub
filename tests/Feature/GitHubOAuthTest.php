@@ -65,7 +65,7 @@ class GitHubOAuthTest extends TestCase
         $this->assertNotEmpty($raw);
     }
 
-    public function test_users_cannot_see_another_users_github_connection(): void
+    public function test_users_cannot_revoke_another_users_github_connection(): void
     {
         [$owner, $stranger] = User::factory()->count(2)->create();
         $connection = ServiceConnection::factory()->create([
@@ -74,12 +74,11 @@ class GitHubOAuthTest extends TestCase
         ]);
 
         $this->actingAs($stranger)
-            ->getJson(route('connections.show', $connection))
+            ->delete(route('connections.destroy', $connection))
             ->assertForbidden();
 
-        $this->actingAs($stranger)
-            ->patch(route('connections.destroy', $connection))
-            ->assertForbidden();
+        $connection->refresh();
+        $this->assertSame(ConnectionStatus::ACTIVE, $connection->status);
     }
 
     public function test_owner_can_revoke_github_connection_without_exposing_tokens(): void
@@ -93,13 +92,14 @@ class GitHubOAuthTest extends TestCase
         ]);
 
         $this->actingAs($owner)
-            ->getJson(route('connections.show', $connection))
+            ->get(route('connections.index'))
             ->assertOk()
-            ->assertJsonMissingPath('data.access_token')
-            ->assertJsonMissingPath('data.refresh_token');
+            ->assertDontSee('secret-access', false)
+            ->assertDontSee('secret-refresh', false);
 
         $this->actingAs($owner)
-            ->patch(route('connections.destroy', $connection))
+            ->from(route('connections.index'))
+            ->delete(route('connections.destroy', $connection))
             ->assertRedirect(route('connections.index'));
 
         $connection->refresh();
