@@ -1,167 +1,175 @@
-# FlowHub - Plataforma de Automatización Personal
+# FlowHub 🚀
 
-FlowHub es una plataforma distribuida de automatización que permite conectar aplicaciones y servicios en línea (como GitHub y Google) para que interactúen entre sí mediante reglas de "si ocurre X, entonces haz Y" (automatizaciones). El proyecto fue desarrollado siguiendo una arquitectura asíncrona robusta.
+FlowHub is a distributed personal automation platform that allows users to connect their online applications and services to "talk" to each other without manual intervention. 
 
-## Diagrama de Arquitectura
+Think of it as a self-hosted alternative to Zapier or Make. You define automations of the type *"when X happens, then do Y (and then Z)"*. The system handles the execution asynchronously using a robust background worker and a message broker.
+
+---
+
+## 🏗️ Architecture & Automation Lifecycle
+
+The platform is strictly separated into a **Synchronous Web Application** (Producer) and an **Asynchronous Worker** (Consumer). Communication between them happens exclusively via **Redis**.
 
 ```mermaid
-graph TD
-    User([Usuario]) -->|HTTP| Web[Laravel Web]
-    GH_Webhook([GitHub Webhook]) -->|HTTP + HMAC| Web
-    Scheduler([Laravel Scheduler]) -.-> Web
-    
-    Web -->|publica Job| Broker[(Redis Broker)]
-    
-    Broker -->|consume| Worker[Worker Independiente]
-    
-    Worker --> AutoEngine[Automation Engine]
-    AutoEngine --> PM[Provider Manager]
-    PM --> GHA[GitHub Adapter]
-    PM --> GOA[Google Adapter]
-    
-    GHA -->|API| GitHubAPI([GitHub API])
-    GOA -->|API| GmailAPI([Gmail API])
-    GOA -->|API| CalendarAPI([Calendar API])
-    
-    Web --> DB[(PostgreSQL / Supabase)]
-    AutoEngine --> DB
+sequenceDiagram
+    autonumber
+    actor GitHub
+    participant Route as routes/web.php
+    participant Controller as GitHubWebhookController
+    participant Engine as ExecutionEngine
+    participant DB as PostgreSQL
+    participant Redis as Redis Queue
+    participant Worker as Queue Worker (CLI)
+    participant Job as ProcessAutomationAction
+    participant Manager as ProviderManager
+    participant Adapter as GoogleAdapter
+    actor Google as Google API
+
+    Note over GitHub, Redis: ⚡ SYNCHRONOUS PHASE (Must be ultra-fast)
+    GitHub->>Route: POST /webhooks/github (JSON Payload)
+    Route->>Controller: Route Request
+    Controller->>Controller: Verify HMAC Signature
+    Controller->>DB: Fetch Active Automations
+    loop For each automation
+        Controller->>Engine: process(automation, payload)
+        Engine->>Engine: ConditionEvaluator checks rules
+        alt Rules Passed
+            Engine->>DB: Create AutomationExecution (PENDING)
+            Engine->>DB: Create ExecutionStep (PENDING)
+            Engine->>Redis: Dispatch Job to Queue
+        end
+    end
+    Controller-->>GitHub: HTTP 200 OK (Acknowledged)
+
+    Note over Worker, Google: 🕰️ ASYNCHRONOUS PHASE (Heavy Lifting)
+    Worker->>Redis: Poll for new jobs
+    Redis-->>Worker: Pending Job Found
+    Worker->>Job: Execute handle()
+    Job->>DB: Update ExecutionStep to PROCESSING
+    Job->>Job: Interpolate variables (e.g., ${trigger.title})
+    Job->>Manager: execute('google.send_email')
+    Manager->>Adapter: execute() -> perform()
+    Adapter->>Google: HTTP POST to Gmail API
+    Google-->>Adapter: HTTP 200 OK
+    Adapter-->>Job: Return ActionResult DTO
+    Job->>DB: Update ExecutionStep to SUCCESS
 ```
 
-El diagrama anterior ilustra el flujo: ya sea por un evento (webhook) o por tiempo (scheduler), la aplicación web publica un trabajo (Job) en el broker Redis. Un worker independiente lo consume, procesa la cadena de acciones de forma asíncrona mediante adaptadores, y registra todo en la base de datos PostgreSQL.
+---
 
-## Requisitos Previos
-* **PHP** 8.2+
-* **Composer**
-* **Node.js** & NPM
-* **PostgreSQL** (se puede usar Supabase)
-* **Redis** (como broker externo obligatorio)
-* Un túnel HTTP como **Cloudflare Tunnel** o **ngrok** (para recibir webhooks en local)
+## 🛠️ Prerequisites
 
-## 1. Instalación y Configuración
+Before you begin, ensure you have the following installed on your machine:
+- **[PHP >= 8.2](https://windows.php.net/download/)**
+- **[Composer](https://getcomposer.org/download/)**
+- **[PostgreSQL](https://www.postgresql.org/download/)** (or MySQL/MariaDB)
+- **[Redis Server](https://github.com/tporadowski/redis/releases/tag/v5.0.14.1)** (For Windows, download the portable `.zip` from this link and extract it in the root folder)
+- **[Git](https://git-scm.com/downloads)**
 
-Clonar el repositorio y configurar dependencias:
+---
+
+## ⚙️ Installation & Setup
+
+### 1. Clone the Repository
 ```bash
-git clone <url-del-repositorio>
+git clone git@github.com:your-username/flowhub.git
 cd FlowHub
+```
+
+### 2. Install Dependencies
+```bash
 composer install
 npm install
+npm run build
 ```
 
-Configurar el entorno (`.env`):
-Copia el archivo de ejemplo:
+### 3. Environment Configuration
+Copy the environment template and generate your app key:
 ```bash
 cp .env.example .env
 php artisan key:generate
 ```
 
-### Configurar Supabase y SSL (PostgreSQL)
-Abre el archivo `.env` y ajusta las credenciales de la base de datos para Supabase. Asegúrate de incluir el soporte SSL para conexiones externas si Supabase lo requiere:
+Update your `.env` file with your specific credentials:
 ```env
+# Database
 DB_CONNECTION=pgsql
-DB_HOST=aws-0-....pooler.supabase.com
+DB_HOST=127.0.0.1
 DB_PORT=5432
-DB_DATABASE=postgres
-DB_USERNAME=postgres.xxxx
-DB_PASSWORD=tu_password
-# Agregar si es necesario por Supabase
-# PDO_MYSQL_ATTR_SSL_CA=...
-```
+DB_DATABASE=flowhub
+DB_USERNAME=your_db_user
+DB_PASSWORD=your_db_password
 
-### Configurar Redis y colas
-Es indispensable levantar un servidor Redis (puede ser vía Docker):
-```bash
-docker run --name redis -p 6379:6379 -d redis
-```
-En tu `.env`, asegúrate de tener:
-```env
-REDIS_HOST=127.0.0.1
-REDIS_PASSWORD=null
-REDIS_PORT=6379
-
+# Queue (Must be redis, NOT database)
 QUEUE_CONNECTION=redis
-```
-*(No se admite usar `sync` o `database` para la cola).*
 
-## 2. Configuración de Credenciales de Cliente (OAuth y Webhooks)
+# OAuth Credentials (Client ID & Secrets)
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+GOOGLE_REDIRECT_URI="${APP_URL}/auth/google/callback"
 
-### GitHub OAuth & Webhooks
-1. Registra una OAuth App en los [Developer Settings de GitHub](https://github.com/settings/developers).
-2. Obtén el **Client ID** y **Client Secret**.
-3. Configura el Callback URL como `https://<tu-tunel>/auth/github/callback`.
-4. Para el Webhook de eventos, configura una URL en un repositorio o a nivel cuenta hacia `https://<tu-tunel>/webhooks/github`, tipo de contenido `application/json`, envía solo el evento `issues`, y genera un secreto de alta entropía.
+GITHUB_CLIENT_ID=your_github_client_id
+GITHUB_CLIENT_SECRET=your_github_client_secret
+GITHUB_REDIRECT_URI="${APP_URL}/auth/github/callback"
 
-En tu `.env`:
-```env
-GITHUB_CLIENT_ID=tu_client_id
-GITHUB_CLIENT_SECRET=tu_client_secret
-GITHUB_REDIRECT_URI=https://<tu-tunel>/auth/github/callback
-GITHUB_WEBHOOK_SECRET=tu_secreto_webhook
+# GitHub Webhook Security
+GITHUB_WEBHOOK_SECRET=your_secure_random_string
 ```
 
-### Google OAuth (Gmail & Calendar)
-1. En Google Cloud Console, crea un proyecto.
-2. Habilita la **Gmail API** y la **Google Calendar API**.
-3. Configura la **OAuth Consent Screen**. Si la aplicación está en modo *Testing*, deberás añadir tu cuenta de Google como **Tester**. (Nota: En modo Testing los refresh tokens suelen expirar a los 7 días).
-4. Crea credenciales tipo **Web Application**. Agrega `https://<tu-tunel>/auth/google/callback` como URI de redirección.
-5. Obtén el **Client ID** y **Client Secret**.
-
-En tu `.env`:
-```env
-GOOGLE_CLIENT_ID=tu_client_id
-GOOGLE_CLIENT_SECRET=tu_client_secret
-GOOGLE_REDIRECT_URI=https://<tu-tunel>/auth/google/callback
-```
-
-## 3. Base de Datos: Migraciones, Seed y Pruebas
-
-Ejecuta las migraciones y puebla la base de datos inicial:
+### 4. Run Migrations
 ```bash
-php artisan migrate:fresh --seed
+php artisan migrate
 ```
-
-Para correr la suite de pruebas (que automatiza la verificación de todos los componentes integrados):
-```bash
-php artisan test
-```
-
-## 4. Comandos de Ejecución y Levantamiento
-
-El proyecto requiere ejecutar varios procesos de manera independiente. Abre **4 terminales** distintas:
-
-1. **Aplicación Web (Productor):**
-   ```bash
-   php artisan serve
-   ```
-2. **Frontend Assets (Vite):**
-   ```bash
-   npm run dev
-   ```
-3. **Worker Independiente (Consumidor):**
-   ```bash
-   php artisan queue:work redis --queue=automations --tries=4
-   ```
-4. **Programador de Tareas (Scheduler):**
-   ```bash
-   php artisan schedule:work
-   ```
-*(Asegúrate de que tu túnel como ngrok o cloudflared esté corriendo y apuntando al puerto de `php artisan serve`, típicamente el 8000).*
-
-## 5. Pasos exactos de una demo limpia
-
-1. Levanta Redis, ngrok (o tunnel), y los 4 comandos descritos arriba.
-2. Ingresa a la aplicación a través de la URL de tu túnel público y crea una cuenta nueva.
-3. Ve a **Conexiones** y autoriza ambas cuentas: GitHub y Google (asegúrate de que los scopes solicitados se acepten).
-4. Crea una **Automatización**:
-   - **Trigger**: Webhook de GitHub.
-   - **Condición**: El título del issue contiene `urgente`.
-   - **Acción 1**: Enviar correo por Gmail (usando interpolación `{{trigger.issue.title}}`).
-   - **Acción 2**: Crear evento en Calendar.
-5. Apaga temporalmente el **Worker** (Ctrl+C en su terminal).
-6. Ve a tu repositorio de GitHub conectado y crea un **nuevo issue** con la palabra "urgente" en el título.
-7. Vuelve a FlowHub. Entra a **Historial**. Verás que la ejecución está en estado `pending` y la web respondió de inmediato a GitHub (el webhook funciona, pero las acciones aún no se ejecutan porque el worker está apagado).
-8. Enciende de nuevo el **Worker**: `php artisan queue:work redis --queue=automations --tries=4`.
-9. Observa la terminal del worker consumir el Job. Ve al historial, ahora dirá `successful`.
-10. Revisa tu Gmail y Google Calendar; el correo fue enviado y el evento creado exitosamente.
 
 ---
-**Nota de robustez:** El sistema integra *Idempotencia*, *Backoff* (reintentos con retraso por límites de tasa) y una *DLQ* para mensajes fallidos, garantizando una arquitectura resiliente y asíncrona.
+
+## 🚀 Running the Application
+
+To achieve the asynchronous decoupling required by the architecture, you must run several processes independently. **Open separate terminal windows for each of the following commands:**
+
+### Terminal 1: The Web Application
+Starts the Laravel development server.
+```bash
+php artisan serve
+```
+
+### Terminal 2: The Redis Server (If not running as a service)
+If you downloaded the portable Redis version on Windows:
+```bash
+# Example for portable redis
+.\redis\redis-server.exe
+```
+
+### Terminal 3: The Background Worker
+Consumes jobs from the Redis queue and executes the automation actions.
+```bash
+php artisan queue:work
+```
+
+### Terminal 4: The Webhook Tunnel (Pinggy)
+Exposes your local server to the internet so GitHub can send HTTP POST requests.
+```bash
+ssh -p 443 -R0:127.0.0.1:8000 a.pinggy.io
+```
+*(Copy the `https://...pinggy.link` URL provided in the output. You will need it for the GitHub setup).*
+
+---
+
+## 🔗 GitHub Webhook Configuration
+
+To trigger automations from GitHub events (like a new issue being opened), you must configure a webhook in your repository:
+
+1. Go to your GitHub Repository -> **Settings** -> **Webhooks**.
+2. Click **Add webhook**.
+3. **Payload URL:** `https://<your-pinggy-url>/webhooks/github` (Make sure to append `/webhooks/github`).
+4. **Content type:** `application/json` (Crucial!).
+5. **Secret:** Enter the exact string you placed in `GITHUB_WEBHOOK_SECRET` in your `.env` file.
+6. **Which events would you like to trigger this webhook?** Select **Send me everything** (or select specific events like *Issues*, *Push*, etc.).
+7. Ensure **Active** is checked and click **Add webhook**.
+
+---
+
+## 🛡️ Security Notes
+- **Never commit your `.env` file.** All secrets (`Client Secrets`, `Webhook Secrets`) must be kept out of version control.
+- **Tokens are stored securely.** OAuth Access Tokens and Refresh Tokens are managed by the database and should be encrypted at rest in a production environment.
+- The webhook endpoint implements **HMAC SHA-256 signature verification** to ensure that only legitimate payloads from GitHub are processed.
