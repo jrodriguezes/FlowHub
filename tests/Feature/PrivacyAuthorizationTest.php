@@ -23,35 +23,38 @@ class PrivacyAuthorizationTest extends TestCase
     public function test_user_can_list_only_own_automations(): void
     {
         [$owner, $stranger] = User::factory()->count(2)->create();
-        $own = Automation::factory()->create(['user_id' => $owner->id, 'name' => 'Own automation']);
+        Automation::factory()->create(['user_id' => $owner->id, 'name' => 'Own automation']);
         Automation::factory()->create(['user_id' => $stranger->id, 'name' => 'Foreign automation']);
 
-        $response = $this->actingAs($owner)->getJson(route('automations.index'));
+        $response = $this->actingAs($owner)->get(route('automations.index'));
 
         $response->assertOk();
-        $response->assertJsonCount(1, 'data');
-        $response->assertJsonPath('data.0.id', $own->id);
-        $response->assertJsonMissing(['name' => 'Foreign automation']);
+        $response->assertSee('Own automation');
+        $response->assertDontSee('Foreign automation');
     }
 
     public function test_user_can_view_update_and_delete_own_automation(): void
     {
         $owner = User::factory()->create();
-        $automation = Automation::factory()->create(['user_id' => $owner->id]);
+        $automation = $this->createAutomationFor($owner, 'Original automation');
 
         $this->actingAs($owner)
-            ->getJson(route('automations.show', $automation))
+            ->get(route('automations.show', $automation))
             ->assertOk()
-            ->assertJsonPath('data.id', $automation->id);
+            ->assertSee('Original automation');
 
         $this->actingAs($owner)
-            ->putJson(route('automations.update', $automation), ['name' => 'Updated'])
-            ->assertOk()
-            ->assertJsonPath('data.name', 'Updated');
+            ->put(route('automations.update', $automation), $this->automationPayload('Updated automation'))
+            ->assertRedirect(route('automations.index'));
+
+        $this->assertDatabaseHas('automations', [
+            'id' => $automation->id,
+            'name' => 'Updated automation',
+        ]);
 
         $this->actingAs($owner)
-            ->deleteJson(route('automations.destroy', $automation))
-            ->assertNoContent();
+            ->delete(route('automations.destroy', $automation))
+            ->assertRedirect(route('automations.index'));
 
         $this->assertDatabaseMissing('automations', ['id' => $automation->id]);
     }
@@ -59,156 +62,167 @@ class PrivacyAuthorizationTest extends TestCase
     public function test_user_cannot_view_update_or_delete_foreign_automation(): void
     {
         [$owner, $stranger] = User::factory()->count(2)->create();
-        $automation = Automation::factory()->create(['user_id' => $owner->id]);
+        $automation = $this->createAutomationFor($owner, 'Protected automation');
 
         $this->actingAs($stranger)
-            ->getJson(route('automations.show', $automation))
+            ->get(route('automations.show', $automation))
             ->assertForbidden();
 
         $this->actingAs($stranger)
-            ->putJson(route('automations.update', $automation), ['name' => 'Hijacked'])
+            ->put(route('automations.update', $automation), $this->automationPayload('Hijacked'))
             ->assertForbidden();
 
         $this->actingAs($stranger)
-            ->deleteJson(route('automations.destroy', $automation))
+            ->delete(route('automations.destroy', $automation))
             ->assertForbidden();
 
         $this->assertDatabaseHas('automations', [
             'id' => $automation->id,
-            'name' => $automation->name,
+            'name' => 'Protected automation',
         ]);
     }
 
-    public function test_user_can_list_only_own_connections_without_tokens(): void
+    public function test_user_can_view_connections_without_exposing_tokens(): void
     {
         [$owner, $stranger] = User::factory()->count(2)->create();
-        $own = ServiceConnection::factory()->create([
+        ServiceConnection::factory()->create([
             'user_id' => $owner->id,
             'provider' => 'github',
             'access_token' => 'secret-access',
             'refresh_token' => 'secret-refresh',
         ]);
-        ServiceConnection::factory()->create(['user_id' => $stranger->id]);
+        ServiceConnection::factory()->create(['user_id' => $stranger->id, 'provider' => 'google']);
 
-        $response = $this->actingAs($owner)->getJson(route('connections.index'));
+        $response = $this->actingAs($owner)->get(route('connections.index'));
 
         $response->assertOk();
-        $response->assertJsonCount(1, 'data');
-        $response->assertJsonPath('data.0.id', $own->id);
-        $response->assertJsonMissingPath('data.0.access_token');
-        $response->assertJsonMissingPath('data.0.refresh_token');
+        $response->assertSee('GitHub');
+        $response->assertDontSee('secret-access', false);
+        $response->assertDontSee('secret-refresh', false);
     }
 
-    public function test_user_cannot_view_update_or_delete_foreign_connection(): void
+    public function test_user_cannot_revoke_foreign_connection(): void
     {
         [$owner, $stranger] = User::factory()->count(2)->create();
         $connection = ServiceConnection::factory()->create(['user_id' => $owner->id]);
 
         $this->actingAs($stranger)
-            ->getJson(route('connections.show', $connection))
-            ->assertForbidden();
-
-        $this->actingAs($stranger)
-            ->putJson(route('connections.update', $connection), ['status' => 'revoked'])
-            ->assertForbidden();
-
-        $this->actingAs($stranger)
-            ->deleteJson(route('connections.destroy', $connection))
+            ->delete(route('connections.destroy', $connection))
             ->assertForbidden();
 
         $this->assertDatabaseHas('service_connections', ['id' => $connection->id]);
     }
 
-    public function test_user_can_view_update_and_delete_own_connection(): void
+    public function test_user_can_revoke_own_connection(): void
     {
         $owner = User::factory()->create();
-        $connection = ServiceConnection::factory()->create(['user_id' => $owner->id]);
+        $connection = ServiceConnection::factory()->create([
+            'user_id' => $owner->id,
+            'provider' => 'github',
+            'access_token' => 'secret-access',
+            'refresh_token' => 'secret-refresh',
+        ]);
 
         $this->actingAs($owner)
-            ->getJson(route('connections.show', $connection))
-            ->assertOk()
-            ->assertJsonMissingPath('data.access_token')
-            ->assertJsonMissingPath('data.refresh_token');
+            ->from(route('connections.index'))
+            ->delete(route('connections.destroy', $connection))
+            ->assertRedirect(route('connections.index'));
 
-        $this->actingAs($owner)
-            ->putJson(route('connections.update', $connection), ['status' => 'revoked'])
-            ->assertOk();
+        $connection->refresh();
 
-        $this->actingAs($owner)
-            ->deleteJson(route('connections.destroy', $connection))
-            ->assertNoContent();
-
-        $this->assertDatabaseMissing('service_connections', ['id' => $connection->id]);
+        $this->assertSame('revoked', $connection->status->value);
+        $this->assertNull($connection->access_token);
+        $this->assertNotNull($connection->revoked_at);
     }
 
     public function test_user_can_list_only_own_executions(): void
     {
         [$owner, $stranger] = User::factory()->count(2)->create();
-        $ownAutomation = Automation::factory()->create(['user_id' => $owner->id]);
-        $foreignAutomation = Automation::factory()->create(['user_id' => $stranger->id]);
-
-        $own = AutomationExecution::factory()->create([
+        $ownAutomation = Automation::factory()->create([
             'user_id' => $owner->id,
-            'automation_id' => $ownAutomation->id,
+            'name' => 'Own execution automation',
         ]);
-        AutomationExecution::factory()->create([
+        $foreignAutomation = Automation::factory()->create([
             'user_id' => $stranger->id,
-            'automation_id' => $foreignAutomation->id,
+            'name' => 'Foreign execution automation',
         ]);
 
-        $response = $this->actingAs($owner)->getJson(route('executions.index'));
+        $own = AutomationExecution::factory()->forOwner($owner, $ownAutomation)->create();
+        AutomationExecution::factory()->forOwner($stranger, $foreignAutomation)->create();
+
+        $response = $this->actingAs($owner)->get(route('executions.index'));
 
         $response->assertOk();
-        $response->assertJsonCount(1, 'data');
-        $response->assertJsonPath('data.0.id', $own->id);
+        $response->assertSee('#'.$own->id);
+        $response->assertSee('Own execution automation');
+        $response->assertDontSee('Foreign execution automation');
     }
 
-    public function test_user_cannot_view_update_or_delete_foreign_execution(): void
+    public function test_user_cannot_view_foreign_execution(): void
     {
         [$owner, $stranger] = User::factory()->count(2)->create();
         $automation = Automation::factory()->create(['user_id' => $owner->id]);
-        $execution = AutomationExecution::factory()->create([
-            'user_id' => $owner->id,
-            'automation_id' => $automation->id,
-        ]);
+        $execution = AutomationExecution::factory()->forOwner($owner, $automation)->create();
 
         $this->actingAs($stranger)
-            ->getJson(route('executions.show', $execution))
-            ->assertForbidden();
-
-        $this->actingAs($stranger)
-            ->putJson(route('executions.update', $execution), ['status' => 'failed'])
-            ->assertForbidden();
-
-        $this->actingAs($stranger)
-            ->deleteJson(route('executions.destroy', $execution))
+            ->get(route('executions.show', $execution))
             ->assertForbidden();
 
         $this->assertDatabaseHas('automation_executions', ['id' => $execution->id]);
     }
 
-    public function test_user_can_view_update_and_delete_own_execution(): void
+    public function test_user_can_view_own_execution(): void
     {
         $owner = User::factory()->create();
-        $automation = Automation::factory()->create(['user_id' => $owner->id]);
-        $execution = AutomationExecution::factory()->create([
+        $automation = Automation::factory()->create(['user_id' => $owner->id, 'name' => 'Demo automation']);
+        $execution = AutomationExecution::factory()->forOwner($owner, $automation)->create();
+
+        $this->actingAs($owner)
+            ->get(route('executions.show', $execution))
+            ->assertOk()
+            ->assertSee('Detalle de Ejecución #'.$execution->id)
+            ->assertSee('Demo automation');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function automationPayload(string $name): array
+    {
+        return [
+            'name' => $name,
+            'description' => 'Automation used in authorization tests',
+            'is_active' => true,
+            'trigger' => ['type' => 'github_issue'],
+            'actions' => [[
+                'type' => 'google.send_email',
+                'config' => [
+                    'to' => 'owner@example.com',
+                    'subject' => 'Subject',
+                    'body' => 'Body',
+                ],
+            ]],
+        ];
+    }
+
+    private function createAutomationFor(User $owner, string $name): Automation
+    {
+        $automation = Automation::factory()->create([
             'user_id' => $owner->id,
-            'automation_id' => $automation->id,
+            'name' => $name,
         ]);
 
-        $this->actingAs($owner)
-            ->getJson(route('executions.show', $execution))
-            ->assertOk()
-            ->assertJsonPath('data.id', $execution->id);
+        $automation->trigger()->create(['type' => 'github_issue']);
+        $automation->actions()->create([
+            'type' => 'google.send_email',
+            'position' => 0,
+            'config' => [
+                'to' => 'owner@example.com',
+                'subject' => 'Subject',
+                'body' => 'Body',
+            ],
+        ]);
 
-        $this->actingAs($owner)
-            ->putJson(route('executions.update', $execution), ['status' => 'successful'])
-            ->assertOk();
-
-        $this->actingAs($owner)
-            ->deleteJson(route('executions.destroy', $execution))
-            ->assertNoContent();
-
-        $this->assertDatabaseMissing('automation_executions', ['id' => $execution->id]);
+        return $automation;
     }
 }
