@@ -2,9 +2,9 @@
 
 namespace App\Jobs;
 
-use App\Enums\ExecutionStatus;
 use App\Models\AutomationExecution;
 use App\Models\ExecutionStep;
+use App\Services\ExecutionLogger;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
@@ -32,7 +32,7 @@ class ExecuteAutomation implements ShouldQueue
         return [10, 30, 120];
     }
 
-    public function handle(): void
+    public function handle(ExecutionLogger $logger): void
     {
         Log::info('ExecuteAutomation consumido desde la cola Redis.', [
             'automation_execution_id' => $this->automationExecutionId,
@@ -41,11 +41,11 @@ class ExecuteAutomation implements ShouldQueue
 
         $execution = AutomationExecution::query()->find($this->automationExecutionId);
 
-        if (!$execution) {
+        if (!$execution || $execution->status->value === 'skipped') {
             return;
         }
 
-        $execution->update(['status' => ExecutionStatus::PROCESSING]);
+        $logger->markExecutionProcessing($execution);
 
         ExecutionStep::query()
             ->where('automation_execution_id', $execution->id)
