@@ -176,11 +176,15 @@
                             <div class="grid grid-cols-2 gap-2">
                                 <div>
                                     <label class="block text-xs font-medium text-gray-400 mb-1">Fecha/Hora de Inicio</label>
-                                    <input type="datetime-local" :name="`actions[${index}][config][start]`" x-model="action.config.start" class="block w-full bg-[#0B0F19] border border-white/10 rounded py-1.5 px-2 text-sm text-gray-200 focus:ring-indigo-500 focus:border-indigo-500">
+                                    <div class="date-input-wrap relative">
+                                        <input type="datetime-local" :name="`actions[${index}][config][start]`" x-model="action.config.start" class="date-input-dark block w-full bg-[#0B0F19] border border-white/10 rounded py-1.5 px-2 text-sm text-gray-200 focus:ring-indigo-500 focus:border-indigo-500">
+                                    </div>
                                 </div>
                                 <div>
                                     <label class="block text-xs font-medium text-gray-400 mb-1">Fecha/Hora de Fin</label>
-                                    <input type="datetime-local" :name="`actions[${index}][config][end]`" x-model="action.config.end" class="block w-full bg-[#0B0F19] border border-white/10 rounded py-1.5 px-2 text-sm text-gray-200 focus:ring-indigo-500 focus:border-indigo-500">
+                                    <div class="date-input-wrap relative">
+                                        <input type="datetime-local" :name="`actions[${index}][config][end]`" x-model="action.config.end" class="date-input-dark block w-full bg-[#0B0F19] border border-white/10 rounded py-1.5 px-2 text-sm text-gray-200 focus:ring-indigo-500 focus:border-indigo-500">
+                                    </div>
                                 </div>
                             </div>
                             <div>

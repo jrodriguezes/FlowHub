@@ -158,3 +158,20 @@ window.automationForm = function(config) {
 }
 
 Alpine.start();
+
+document.addEventListener('click', (event) => {
+    const input = event.target;
+
+    if (!(input instanceof HTMLInputElement) || !input.classList.contains('date-input-dark')) {
+        return;
+    }
+
+    if (!['date', 'datetime-local', 'time'].includes(input.type)) {
+        return;
+    }
+
+    if (typeof input.showPicker === 'function') {
+        event.preventDefault();
+        input.showPicker();
+    }
+});
