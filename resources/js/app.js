@@ -40,6 +40,10 @@ window.automationManager = function(storeUrl) {
             } else {
                 document.getElementById('cron_expression').value = '* * * * *';
             }
+
+            if (document.getElementById('timezone')) {
+                document.getElementById('timezone').value = automation.trigger?.timezone || 'America/Costa_Rica';
+            }
             
             window.dispatchEvent(new CustomEvent('load-automation', {
                 detail: {
