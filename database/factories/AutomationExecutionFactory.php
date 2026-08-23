@@ -39,4 +39,33 @@ class AutomationExecutionFactory extends Factory
             ];
         });
     }
+
+    public function successful(): static
+    {
+        return $this->state(fn () => [
+            'status' => ExecutionStatus::SUCCESSFUL,
+            'started_at' => now()->subMinutes(2),
+            'completed_at' => now()->subMinute(),
+            'output_payload' => ['result' => 'ok'],
+        ]);
+    }
+
+    public function failed(): static
+    {
+        return $this->state(fn () => [
+            'status' => ExecutionStatus::FAILED,
+            'started_at' => now()->subMinutes(2),
+            'completed_at' => now()->subMinute(),
+            'error_details' => ['message' => 'Error simulado'],
+        ]);
+    }
+
+    public function skipped(): static
+    {
+        return $this->state(fn () => [
+            'status' => ExecutionStatus::SKIPPED,
+            'completed_at' => now(),
+            'error_details' => ['message' => 'Condiciones no cumplidas'],
+        ]);
+    }
 }

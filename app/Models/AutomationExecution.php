@@ -17,6 +17,8 @@ class AutomationExecution extends Model
         'user_id',
         'event_key',
         'status',
+        'started_at',
+        'completed_at',
         'input_payload',
         'output_payload',
         'error_details',
@@ -26,6 +28,8 @@ class AutomationExecution extends Model
     {
         return [
             'status' => ExecutionStatus::class,
+            'started_at' => 'datetime',
+            'completed_at' => 'datetime',
             'input_payload' => 'array',
             'output_payload' => 'array',
             'error_details' => 'array',

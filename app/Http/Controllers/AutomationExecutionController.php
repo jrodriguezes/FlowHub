@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Automation;
 use App\Models\AutomationExecution;
+use App\Services\ExecutionPayloadSanitizer;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -12,20 +14,46 @@ class AutomationExecutionController extends Controller
     {
         $this->authorize('viewAny', AutomationExecution::class);
 
-        // we retrieve the executions along with their parent, automation and paginate them in increments of 15
-        $executions = $request->user()
+        $query = $request->user()
             ->automationExecutions()
-            ->with('automation')
-            ->latest()
-            ->paginate(15);
-        return view('executions.index', compact('executions'));
+            ->with('automation');
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->string('status')->toString());
+        }
+
+        if ($request->filled('automation_id')) {
+            $query->where('automation_id', $request->integer('automation_id'));
+        }
+
+        if ($request->filled('from')) {
+            $query->whereDate('created_at', '>=', $request->string('from')->toString());
+        }
+
+        if ($request->filled('to')) {
+            $query->whereDate('created_at', '<=', $request->string('to')->toString());
+        }
+
+        $executions = $query->latest()->paginate(15)->withQueryString();
+
+        $automations = $request->user()
+            ->automations()
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return view('executions.index', compact('executions', 'automations'));
     }
 
-    public function show(AutomationExecution $automationExecution): View
+    public function show(AutomationExecution $automationExecution, ExecutionPayloadSanitizer $sanitizer): View
     {
         $this->authorize('view', $automationExecution);
-        // we bring the details to paint the Timeline
-        $automationExecution->load(['automation', 'steps']);
-        return view('executions.show', ['execution' => $automationExecution]);
+
+        $automationExecution->load(['automation', 'steps.action']);
+
+        return view('executions.show', [
+            'execution' => $automationExecution,
+            'sanitizedInput' => $sanitizer->sanitize($automationExecution->input_payload ?? []),
+            'sanitizedOutput' => $sanitizer->sanitize($automationExecution->output_payload ?? []),
+        ]);
     }
 }

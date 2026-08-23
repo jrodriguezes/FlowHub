@@ -9,6 +9,7 @@ use App\Models\AutomationExecution;
 use App\Models\ExecutionStep;
 use App\Models\User;
 use App\Services\ExecutionEngine;
+use App\Services\ExecutionLogger;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
@@ -74,7 +75,7 @@ class ExecuteAutomationQueueTest extends TestCase
             'status' => 'pending',
         ]);
 
-        (new ExecuteAutomation($execution->id, 'test-key'))->handle();
+        (new ExecuteAutomation($execution->id, 'test-key'))->handle(app(ExecutionLogger::class));
 
         Queue::assertPushed(ProcessAutomationAction::class, function (ProcessAutomationAction $job) use ($step) {
             return $job->executionStepId === $step->id && $job->queue === 'automations';

@@ -180,7 +180,7 @@ class PrivacyAuthorizationTest extends TestCase
         $this->actingAs($owner)
             ->get(route('executions.show', $execution))
             ->assertOk()
-            ->assertSee('Detalle de Ejecución #'.$execution->id)
+            ->assertSee('Detalle de ejecución #'.$execution->id)
             ->assertSee('Demo automation');
     }
 

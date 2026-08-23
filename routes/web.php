@@ -56,8 +56,6 @@ Route::middleware('auth')->group(function () {
     // Executions pages & crud
     Route::get('/executions', [AutomationExecutionController::class, 'index'])->name('executions.index');
     Route::get('/executions/{automationExecution}', [AutomationExecutionController::class, 'show'])->name('executions.show');
-    Route::put('/executions/{automationExecution}', [AutomationExecutionController::class, 'update'])->name('executions.update');
-    Route::delete('/executions/{automationExecution}', [AutomationExecutionController::class, 'destroy'])->name('executions.destroy');
 
     // Google services
     // user button to redirect to google servers(connect with google)
