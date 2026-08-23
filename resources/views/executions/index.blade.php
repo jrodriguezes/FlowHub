@@ -30,11 +30,11 @@
             </div>
             <div>
                 <label for="from" class="block text-xs font-medium text-gray-400 mb-1">Desde</label>
-                <input type="date" name="from" id="from" value="{{ request('from') }}" class="w-full bg-[#0B0F19] border border-white/10 rounded-lg py-2 px-3 text-sm text-gray-200">
+                <x-date-input name="from" id="from" :value="request('from')" />
             </div>
             <div>
                 <label for="to" class="block text-xs font-medium text-gray-400 mb-1">Hasta</label>
-                <input type="date" name="to" id="to" value="{{ request('to') }}" class="w-full bg-[#0B0F19] border border-white/10 rounded-lg py-2 px-3 text-sm text-gray-200">
+                <x-date-input name="to" id="to" :value="request('to')" />
             </div>
             <div class="flex items-end gap-2">
                 <button type="submit" class="px-4 py-2 bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 rounded-lg text-sm hover:bg-indigo-500/30 transition-colors">Filtrar</button>

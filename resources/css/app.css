@@ -8,6 +8,76 @@
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
 
+html {
+    color-scheme: dark;
+}
+
 [x-cloak] {
     display: none !important;
+}
+
+.date-input-wrap .date-input-dark {
+    position: relative;
+}
+
+.date-input-wrap::after {
+    content: '';
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1.125rem;
+    height: 1.125rem;
+    pointer-events: none;
+    opacity: 0.9;
+    background: center / contain no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23e5e7eb' stroke-width='1.8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'/%3E%3C/svg%3E");
+}
+
+.date-input-wrap:focus-within::after {
+    opacity: 1;
+}
+
+.date-input-dark {
+    color-scheme: dark;
+    cursor: pointer;
+    padding-right: 2.75rem;
+    accent-color: rgb(99 102 241);
+}
+
+.date-input-dark::-webkit-calendar-picker-indicator {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 2.75rem;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.date-input-dark::-moz-calendar-picker-indicator {
+    opacity: 0;
+}
+
+.date-input-dark::-webkit-datetime-edit,
+.date-input-dark::-webkit-datetime-edit-fields-wrapper,
+.date-input-dark::-webkit-datetime-edit-text,
+.date-input-dark::-webkit-datetime-edit-month-field,
+.date-input-dark::-webkit-datetime-edit-day-field,
+.date-input-dark::-webkit-datetime-edit-year-field,
+.date-input-dark::-webkit-datetime-edit-hour-field,
+.date-input-dark::-webkit-datetime-edit-minute-field,
+.date-input-dark::-webkit-datetime-edit-ampm-field {
+    color: rgb(229 231 235);
+}
+
+.date-input-dark::-webkit-datetime-edit-fields-wrapper {
+    padding: 0;
+}
+
+.date-input-dark:focus {
+    outline: none;
+    border-color: rgb(99 102 241);
+    box-shadow: 0 0 0 1px rgb(99 102 241 / 0.45);
 }
