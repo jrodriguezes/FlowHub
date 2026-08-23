@@ -12,12 +12,21 @@ class ProcessAutomationAction implements ShouldQueue
 {
     use Queueable;
 
-    /**
-     * Create a new job instance.
-     */
-    // here we receive the id that we are going to process
+    public int $tries = 4;
+
+    public int $timeout = 120;
+
     public function __construct(public readonly int $executionStepId)
     {
+        $this->onQueue('automations');
+    }
+
+    /**
+     * @return list<int>
+     */
+    public function backoff(): array
+    {
+        return [10, 30, 120];
     }
 
     public function handle(ProviderManager $providerManager): void
@@ -39,7 +48,7 @@ class ProcessAutomationAction implements ShouldQueue
             // we extract "google" from "google.send_email"
             $provider = explode('.', $step->action->type)[0];
             
-            $payload = $step->execution->payload ?? [];
+            $payload = $step->execution->input_payload ?? [];
             $config = $step->action->config ?? [];
             
             // Interpolate variables

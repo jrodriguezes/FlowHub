@@ -143,7 +143,7 @@ If you downloaded the portable Redis version on Windows:
 ### Terminal 3: The Background Worker
 Consumes jobs from the Redis queue and executes the automation actions.
 ```bash
-php artisan queue:work
+php artisan queue:work redis --queue=automations --tries=4 --timeout=120
 ```
 
 ### Terminal 4: The Webhook Tunnel (Pinggy)
