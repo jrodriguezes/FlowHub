@@ -49,16 +49,25 @@ class ProviderManagerTest extends TestCase
 
     public function test_google_adapter_supports_email_and_calendar_simulations(): void
     {
+        \Illuminate\Support\Facades\Http::fake([
+            'gmail.googleapis.com/*' => \Illuminate\Support\Facades\Http::response(['id' => 'fake-gmail-message-1', 'threadId' => 'fake-thread-1'], 200),
+            'www.googleapis.com/calendar/*' => \Illuminate\Support\Facades\Http::response(['id' => 'fake-calendar-event-1', 'htmlLink' => 'http://calendar/fake'], 200),
+            'oauth2.googleapis.com/token' => \Illuminate\Support\Facades\Http::response(['access_token' => 'fake-new-token', 'expires_in' => 3600], 200),
+        ]);
+
         $connection = $this->connectionFor('google');
         $manager = app(ProviderManager::class);
 
         $email = $manager->execute('google', 'google.send_email', [
             'to' => 'ops@example.com',
             'subject' => 'Alerta',
+            'body' => 'Contenido del correo'
         ], $connection);
 
         $event = $manager->execute('google', 'google.create_calendar_event', [
             'title' => 'Sync',
+            'start' => '2026-08-21T15:30:00Z',
+            'end' => '2026-08-21T16:30:00Z',
         ], $connection);
 
         $this->assertTrue($email->success);
