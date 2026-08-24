@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Automation;
+use App\Models\ProcessedEvent;
 use App\Services\ExecutionEngine;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -39,6 +41,7 @@ class GitHubWebhookController extends Controller
 
         // data extraction
         $event = $request->header('x-github-event'); // Ej: "push" o "issues"
+        $deliveryId = $request->header('x-github-delivery');
         $payload = $request->all();
 
         // we inject the event name into the payload so the Condition Evaluator can use it
@@ -48,6 +51,20 @@ class GitHubWebhookController extends Controller
         // we search for all the automations the user has turned on
         $activeAutomations = Automation::where('is_active', true)->get();
         foreach ($activeAutomations as $automation) {
+            $idempotencyKey = "github:{$deliveryId}:automation:{$automation->id}";
+
+            try {
+                // try a atomic insert if already exists, will launch a exception 
+                ProcessedEvent::create([
+                    'idempotency_key' => $idempotencyKey,
+                    'status' => 'reserved', // this means "i'm processing this" 
+                ]);
+            } catch (QueryException $e) {
+                // if an exception is thrown, it means that 
+                // the event was already processed, so we skip it to avoid duplicate work
+                continue;
+            }
+
             // the engine will be in charge of passing the payload to the condition evaluator.
             // if the evaluator says "yes, it is met", the engine will automatically dispatch the jobs to redis.
             $engine->process($automation, $payload);
