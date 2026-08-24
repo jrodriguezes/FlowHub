@@ -201,8 +201,10 @@
                                             Cancelar
                                         </button>
                                         <button type="submit"
+                                            :disabled="isSubmitting"
+                                            :class="{'opacity-50 cursor-not-allowed': isSubmitting}"
                                             class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg shadow-sm shadow-indigo-500/20 transition-all focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#111827] focus:ring-indigo-500">
-                                            <span x-text="isEdit ? 'Guardar Cambios' : 'Crear Automatización'"></span>
+                                            <span x-text="isSubmitting ? 'Guardando...' : (isEdit ? 'Guardar Cambios' : 'Crear Automatización')"></span>
                                         </button>
                                     </div>
                                 </form>

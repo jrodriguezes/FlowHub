@@ -6,6 +6,7 @@ window.automationManager = function(storeUrl) {
     return {
         showPanel: false,
         isEdit: false,
+        isSubmitting: false,
         formAction: storeUrl,
         errors: [],
         
@@ -57,6 +58,8 @@ window.automationManager = function(storeUrl) {
         },
 
         async submitForm(e) {
+            if (this.isSubmitting) return;
+            this.isSubmitting = true;
             this.errors = [];
             const form = e.target;
             const formData = new FormData(form);
@@ -94,6 +97,8 @@ window.automationManager = function(storeUrl) {
                 }
             } catch (err) {
                 this.errors = ['Error de conexión.'];
+            } finally {
+                this.isSubmitting = false;
             }
         }
     }
