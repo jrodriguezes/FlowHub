@@ -48,9 +48,17 @@
             </div>
             <div>
                 <label for="timezone" class="block text-sm font-medium text-gray-400">Zona horaria</label>
-                <input type="text" name="trigger[timezone]" id="timezone" value="{{ old('trigger.timezone', $automation->trigger->timezone ?? 'America/Costa_Rica') }}" placeholder="America/Costa_Rica"
-                    class="mt-1 block w-full bg-[#0B0F19] border border-white/10 rounded-lg py-2 px-3 text-gray-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                <p class="mt-2 text-xs text-gray-500">Ej: America/Costa_Rica, UTC, America/New_York</p>
+                <select name="trigger[timezone]" id="timezone" class="mt-1 block w-full bg-[#0B0F19] border border-white/10 rounded-lg py-2 px-3 text-gray-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    @php $tz = old('trigger.timezone', $automation->trigger->timezone ?? 'America/Costa_Rica'); @endphp
+                    <option value="America/Costa_Rica" {{ $tz === 'America/Costa_Rica' ? 'selected' : '' }}>América/Costa Rica</option>
+                    <option value="UTC" {{ $tz === 'UTC' ? 'selected' : '' }}>UTC (Tiempo Universal)</option>
+                    <option value="America/Mexico_City" {{ $tz === 'America/Mexico_City' ? 'selected' : '' }}>América/Mexico City</option>
+                    <option value="America/Bogota" {{ $tz === 'America/Bogota' ? 'selected' : '' }}>América/Bogotá</option>
+                    <option value="America/Argentina/Buenos_Aires" {{ $tz === 'America/Argentina/Buenos_Aires' ? 'selected' : '' }}>América/Buenos Aires</option>
+                    <option value="America/New_York" {{ $tz === 'America/New_York' ? 'selected' : '' }}>América/New York</option>
+                    <option value="Europe/Madrid" {{ $tz === 'Europe/Madrid' ? 'selected' : '' }}>Europa/Madrid</option>
+                </select>
+                <p class="mt-2 text-xs text-gray-500">Selecciona tu zona horaria local.</p>
             </div>
         </div>
     </div>
@@ -189,7 +197,16 @@
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-gray-400 mb-1">Zona Horaria (Opcional)</label>
-                                <input type="text" :name="`actions[${index}][config][timezone]`" x-model="action.config.timezone" placeholder="America/Costa_Rica" class="block w-full bg-[#0B0F19] border border-white/10 rounded py-1.5 px-2 text-sm text-gray-200 focus:ring-indigo-500 focus:border-indigo-500">
+                                <select :name="`actions[${index}][config][timezone]`" x-model="action.config.timezone" class="block w-full bg-[#0B0F19] border border-white/10 rounded py-1.5 px-2 text-sm text-gray-200 focus:ring-indigo-500 focus:border-indigo-500">
+                                    <option value="">(Opcional) Usar zona predeterminada</option>
+                                    <option value="America/Costa_Rica">América/Costa Rica</option>
+                                    <option value="UTC">UTC (Tiempo Universal)</option>
+                                    <option value="America/Mexico_City">América/Mexico City</option>
+                                    <option value="America/Bogota">América/Bogotá</option>
+                                    <option value="America/Argentina/Buenos_Aires">América/Buenos Aires</option>
+                                    <option value="America/New_York">América/New York</option>
+                                    <option value="Europe/Madrid">Europa/Madrid</option>
+                                </select>
                             </div>
                         </div>
                         
