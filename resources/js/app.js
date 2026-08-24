@@ -16,6 +16,11 @@ window.automationManager = function(storeUrl) {
             this.errors = [];
             document.getElementById('automation-form').reset();
             
+            // FORZAR LIMPIEZA
+            document.getElementById('name').value = '';
+            document.getElementById('description').value = '';
+            document.getElementById('is_active').checked = true;
+            
             window.dispatchEvent(new CustomEvent('load-automation', {
                 detail: {
                     triggerType: 'github_issue',

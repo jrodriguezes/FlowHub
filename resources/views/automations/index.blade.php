@@ -40,14 +40,14 @@
                     </div>
 
                     <div class="mb-4 pr-16">
-                        <h3 class="text-lg font-semibold text-gray-100 truncate">
+                        <h3 class="text-lg font-semibold text-gray-100 break-words pr-2">
                             <a href="{{ route('automations.show', $automation->id ?? 1) }}"
                                 class="hover:text-indigo-400 focus:outline-none">
                                 <span class="absolute inset-0" aria-hidden="true"></span>
                                 {{ $automation->name }}
                             </a>
                         </h3>
-                        <p class="text-sm text-gray-400 mt-1 line-clamp-2">
+                        <p class="text-sm text-gray-400 mt-1 break-words">
                             {{ $automation->description ?? 'Sin descripción proporcionada para este flujo.' }}
                         </p>
                     </div>
