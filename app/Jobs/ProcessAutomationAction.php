@@ -62,6 +62,15 @@ class ProcessAutomationAction implements ShouldQueue
                 $logger->markStepFailed($step, (string) ($result->error ?? 'La acción devolvió un error.'));
             }
         } catch (\Throwable $e) {
+
+            // if we see the keyword, we extract the seconds (from the code) and release peacefully to the queue
+            if ($e->getMessage() === 'RATE_LIMIT_EXCEEDED') {
+                $delay = $e->getCode() > 0 ? $e->getCode() : 60;
+                Log::warning("Rate limit alcanzado. Reencolando en {$delay} segundos.");
+                $this->release($delay);
+                return;
+            }
+
             Log::error('Job Failed: ' . $e->getMessage());
 
             $message = config('app.debug')
@@ -72,6 +81,7 @@ class ProcessAutomationAction implements ShouldQueue
 
             throw $e;
         }
+
     }
 
     private function interpolateConfig(array $config, array $payload): array
