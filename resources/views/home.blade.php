@@ -1,9 +1,9 @@
 @extends('layouts.app')
 
 @php
-    $automationsCount = \App\Models\Automation::count();
+    $automationsCount = \App\Models\Automation::where('user_id', Auth::id())->count();
     $connectionsCount = \App\Models\ServiceConnection::where('user_id', Auth::id())->count();
-    $executionsCount = \App\Models\AutomationExecution::count();
+    $executionsCount = \App\Models\AutomationExecution::where('user_id', Auth::id())->count();
 @endphp
 
 @section('content')

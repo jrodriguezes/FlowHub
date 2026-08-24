@@ -17,7 +17,7 @@ class ScheduledAutomationDispatcher
     }
 
     /**
-     * @return int Cantidad de automatizaciones encoladas.
+     * @return int 
      */
     public function dispatchDue(): int
     {
@@ -63,6 +63,7 @@ class ScheduledAutomationDispatcher
             }
 
             $scheduledAtUtc = $trigger->next_run_at->copy()->utc();
+            // $idempotencyKey return something like this = scheduled:42:2026-08-24T08:00:00Z
             $idempotencyKey = sprintf(
                 'scheduled:%d:%s',
                 $automation->id,

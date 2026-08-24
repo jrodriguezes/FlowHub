@@ -7,6 +7,7 @@ use App\Models\ServiceConnection;
 use \Illuminate\Support\Facades\Http;
 use \Illuminate\Http\Client\Response;
 use \Illuminate\Support\Facades\Log;
+use \App\Services\TokenRefreshService;
 class GoogleAdapter extends AbstractProviderAdapter
 {
     public function provider(): string
@@ -77,34 +78,21 @@ class GoogleAdapter extends AbstractProviderAdapter
     // we prepare our mail carrier 
     private function googleHttp(ServiceConnection $connection)
     {
-        // check if token is expired and refresh it
-        if ($connection->expires_at && now()->parse($connection->expires_at)->isPast() && $connection->refresh_token) {
-            $refreshResponse = Http::post('https://oauth2.googleapis.com/token', [
-                'client_id' => config('services.google.client_id'),
-                'client_secret' => config('services.google.client_secret'),
-                'refresh_token' => $connection->refresh_token,
-                'grant_type' => 'refresh_token',
-            ]);
+        // we use our new services with redis locks
+        $tokenService = app(TokenRefreshService::class);
+        $tokenService->refreshTokenIfNeeded($connection);
 
-            if ($refreshResponse->successful()) {
-                $data = $refreshResponse->json();
-                $connection->update([
-                    'access_token' => $data['access_token'],
-                    'expires_at' => now()->addSeconds($data['expires_in']),
-                ]);
-            } else {
-                Log::error('Google Token Refresh Failed', $refreshResponse->json() ?? []);
-            }
-        }
+        // we refresh the connection just in case the service updated the token
+        $connection->refresh();
 
-        // we deactive the cerification ssl in case of an issue with the domain of google
+        // we deactivate the ssl certification in case of an issue with the domain of google
         $verify = config('services.google.guzzle.verify', true);
 
         // Http. we use the laravel http, when we pass the token the mail carrier says 'paste the bearer token here'
         return Http::withToken((string) $connection->access_token)
             ->acceptJson() // we want json response
             ->timeout(15) // wait 15 secs for a response
-            ->withOptions(['verify' => $verify]); // we deactive the cerification ssl in case of an issue with the domain of google
+            ->withOptions(['verify' => $verify]); // we deactive the ssl cerification in case of an issue with the domain of google
     }
 
     private function createCalendarEvent(array $parameters, ServiceConnection $connection): ActionResult
@@ -117,11 +105,11 @@ class GoogleAdapter extends AbstractProviderAdapter
         $payload = [
             'summary' => $summary, // event title
             'start' => [ // when the calendar start date, and timezone
-                'dateTime' => date('c', strtotime($start)), // c = 'ISO 8601' format = 2026-08-21T15:30:00+00:00
+                'dateTime' => \Carbon\Carbon::parse($start, $timezone)->toIso8601String(), // correctly apply timezone offset
                 'timeZone' => $timezone,
             ],
             'end' => [ // when the calendar end, date and timezone
-                'dateTime' => date('c', strtotime($end)), // c = 'ISO 8601' format = 2026-08-21T15:30:00+00:00
+                'dateTime' => \Carbon\Carbon::parse($end, $timezone)->toIso8601String(), // correctly apply timezone offset
                 'timeZone' => $timezone,
             ],
         ];
@@ -148,17 +136,24 @@ class GoogleAdapter extends AbstractProviderAdapter
     private function classifyError(Response $response): \RuntimeException
     {
         $status = $response->status();
-        $retryable = in_array($status, [408, 429, 500, 502, 503, 504], true);
+
+        // detect 429 and we put the seconds of wait in the second parameter (error code)
+        if ($status === 429) {
+            $retryAfter = (int) $response->header('Retry-After', 60);
+            return new \RuntimeException('RATE_LIMIT_EXCEEDED', $retryAfter);
+        }
+
+        $retryable = in_array($status, [408, 500, 502, 503, 504], true);
 
         $friendly = match (true) {
             $status === 401 || $status === 403 => 'Google rechazó el token o faltan permisos (scopes).',
             $status === 404 => 'El recurso solicitado en Google no existe.',
-            $status === 429 => 'Se alcanzó el límite de peticiones de Google API.',
             $retryable => 'Los servidores de Google no están disponibles temporalmente.',
             default => 'Google devolvió un error inesperado (HTTP ' . $status . ').',
         };
 
         return new \RuntimeException($friendly);
     }
+
 
 }

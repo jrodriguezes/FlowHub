@@ -40,14 +40,14 @@
                     </div>
 
                     <div class="mb-4 pr-16">
-                        <h3 class="text-lg font-semibold text-gray-100 truncate">
+                        <h3 class="text-lg font-semibold text-gray-100 break-words pr-2">
                             <a href="{{ route('automations.show', $automation->id ?? 1) }}"
                                 class="hover:text-indigo-400 focus:outline-none">
                                 <span class="absolute inset-0" aria-hidden="true"></span>
                                 {{ $automation->name }}
                             </a>
                         </h3>
-                        <p class="text-sm text-gray-400 mt-1 line-clamp-2">
+                        <p class="text-sm text-gray-400 mt-1 break-words">
                             {{ $automation->description ?? 'Sin descripción proporcionada para este flujo.' }}
                         </p>
                     </div>
@@ -201,8 +201,10 @@
                                             Cancelar
                                         </button>
                                         <button type="submit"
+                                            :disabled="isSubmitting"
+                                            :class="{'opacity-50 cursor-not-allowed': isSubmitting}"
                                             class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg shadow-sm shadow-indigo-500/20 transition-all focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#111827] focus:ring-indigo-500">
-                                            <span x-text="isEdit ? 'Guardar Cambios' : 'Crear Automatización'"></span>
+                                            <span x-text="isSubmitting ? 'Guardando...' : (isEdit ? 'Guardar Cambios' : 'Crear Automatización')"></span>
                                         </button>
                                     </div>
                                 </form>
