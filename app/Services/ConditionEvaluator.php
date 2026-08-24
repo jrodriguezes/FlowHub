@@ -16,6 +16,11 @@ class ConditionEvaluator
             $operator = $condition['operator'];
             $value = $condition['value'];
 
+            // normalize the field: remove "trigger." if it exists to search directly in the payload
+            if (str_starts_with($field, 'trigger.')) {
+                $field = substr($field, 8);
+            }
+
             $actualValue = data_get($payload, $field);
 
             switch ($operator) {
