@@ -8,6 +8,8 @@ use App\Services\ProviderManager;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Redis;
 
 class ProcessAutomationAction implements ShouldQueue
 {
@@ -17,6 +19,7 @@ class ProcessAutomationAction implements ShouldQueue
 
     public int $timeout = 120;
 
+    // here we receive the id that we are going to process
     public function __construct(public readonly int $executionStepId)
     {
         $this->onQueue('automations');
@@ -59,7 +62,7 @@ class ProcessAutomationAction implements ShouldQueue
                 $logger->markStepFailed($step, (string) ($result->error ?? 'La acción devolvió un error.'));
             }
         } catch (\Throwable $e) {
-            Log::error('Job Failed: '.$e->getMessage());
+            Log::error('Job Failed: ' . $e->getMessage());
 
             $message = config('app.debug')
                 ? $e->getMessage()
@@ -99,5 +102,35 @@ class ProcessAutomationAction implements ShouldQueue
         }
 
         return $interpolated;
+    }
+
+    public function failed(\Throwable $exception)
+    {
+        $step = ExecutionStep::find($this->executionStepId);
+
+        if (!$step) {
+            return;
+        }
+        // mark as failed step 
+        $logger = app(ExecutionLogger::class);
+        $logger->markStepFailed($step, 'Se agotaron los reintentos:' . $exception->getMessage());
+
+        // save the mirror in the table dead_letter_messages for the UI
+        DB::table('dead_letter_messages')->insert([
+            'automation_execution_id' => $step->automation_execution_id,
+            'payload' => json_encode([
+                'step_id' => $step->id,
+                'action_type' => $step->action->type ?? 'unknown',
+                'error_message' => $exception->getMessage(),
+            ]),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Redis::connection()->rpush('queues:automation-dead-letter', json_encode([
+            'type' => 'dead_letter',
+            'execution_id' => $step->automation_execution_id,
+            'error' => $exception->getMessage(),
+        ]));
     }
 }
