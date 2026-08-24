@@ -152,7 +152,7 @@ Runs due scheduled automations every minute (only enqueues jobs; actions run in 
 php artisan schedule:work
 ```
 
-### Terminal 4: The Webhook Tunnel (Pinggy)
+### Terminal 5: The Webhook Tunnel (Pinggy)
 Exposes your local server to the internet so GitHub can send HTTP POST requests.
 ```bash
 ssh -p 443 -R0:127.0.0.1:8000 a.pinggy.io
